@@ -1,0 +1,14 @@
+:root {
+  --dark-green: #10B981;
+  --padding-sm: 5px;
+  --padding-md: 16px;
+  --small-font: 14px;
+  --small-height: 36px;
+  --small-radius: 8px;
+}
+
+* {
+  font-family: 'Cairo';
+  padding: 0;
+  margin: 0;
+}

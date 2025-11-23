@@ -1,0 +1,81 @@
+.header-nav {
+    top: 0;
+    position: sticky;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px;
+}
+
+.nav-content,
+.nav-content-links {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.nav-content-links {
+    gap: 24px;
+}
+
+.sign-up-btn {
+    font-size: var(--small-font);
+    background-color: var(--dark-green);
+    height: var(--small-height);
+    color: white;
+    padding: var(--padding-sm) var(--padding-md);
+    border-radius: var(--small-radius);
+    border: none;
+    cursor: pointer;
+    transition: background-color 230ms ease-in-out;
+}
+
+.sign-up-btn:hover {
+    background-color: color-mix(in oklab, var(--dark-green) 90%, transparent);
+    ;
+}
+
+.login-btn {
+    color: black;
+    background-color: white;
+    border-radius: var(--small-radius);
+    padding: var(--padding-sm) var(--padding-md);
+    font-size: var(--small-font);
+    border: none;
+    cursor: pointer;
+    transition: background-color 230ms ease-in-out;
+}
+
+.login-btn:hover {
+    background-color: rgba(52, 211, 153, 0.4);
+}
+
+
+.search-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: var(--small-height);
+    padding: var(--padding-sm) var(--padding-md);
+    font-size: var(--small-font);
+    background-color: rgba(226, 232, 240, 0.2);
+    border: none;
+    border-radius: var(--small-radius);
+    cursor: pointer;
+    transition: background-color 230ms ease-in-out;
+}
+
+.search-btn:hover {
+    background-color: color-mix(in oklab, rgba(226, 232, 240) 50%, transparent);
+}
+
+.nav-content-links a {
+    font-size: 16px;
+    text-decoration: none;
+    color: black;
+    transition: color 230ms ease-in-out;
+}
+
+.nav-content-links a:hover {
+    color: var(--dark-green);
+}
