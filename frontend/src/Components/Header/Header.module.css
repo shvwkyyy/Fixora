@@ -104,5 +104,5 @@
 
 .header-paragraph {
     font-size: 1.25rem;
-    color: #64748B;
+    color: var(--light-gray);
 }
