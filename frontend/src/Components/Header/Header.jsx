@@ -25,6 +25,11 @@ function Header() {
                     <img src={fixora_logo} alt="fixora logo" />
                 </div>
             </nav>
+            <section className={styles["header-section"]}>
+                <h1>خدمات منزلية سهلة وبسيطة</h1>
+                <p className={styles["header-paragraph"]}>تواصل مع محترفين موثوقين لجميع احتياجات الخدمات المنزلية. من السباكة إلى الدهان، التنظيف إلى الإصلاحات - نحن</p>
+                <p className={styles["header-paragraph"]}>. هنا لخدمتك</p>
+            </section>
         </header>
     );
 }
