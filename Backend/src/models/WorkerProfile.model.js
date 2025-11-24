@@ -2,55 +2,60 @@ const mongoose = require("mongoose");
 
 const workerSchema = new mongoose.Schema(
     {
-        UserId: {
+        userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
             unique: true, // One-to-one
         },
 
-        Specialty: {
+        specialty: {
             type: String,
             required: true,
         },
 
-        RankScore: {
+        rankScore: {
             type: Number,
             default: 0,
         },
 
-        AppliedJobsCount: {
+        appliedJobsCount: {
             type: Number,
             default: 0,
         },
 
-        CompletedJobsCount: {
+        completedJobsCount: {
             type: Number,
             default: 0,
         },
 
-        HourPrice: {
+        hourPrice: {
             type: Number,
             required: true,
         },
 
-        VerificationStatus: {
+        verificationStatus: {
             type: String,
             enum: ["pending", "verified", "rejected"],
             default: "pending",
         },
 
         // Social Media URLs (not embedded)
-        Facebook_Account: String,
-        TikTok_Account: String,
-        LinkedIn_Account: String,
+        facebookAccount: String,
+        tiktokAccount: String,
+        linkedinAccount: String,
 
         // National ID images
-        National_Id_Front: String,
-        National_Id_Back: String,
-        National_Id_With_Face: String,
+        nationalIdFront: String,
+        nationalIdBack: String,
+        nationalIdWithFace: String,
     },
     { timestamps: true }
 );
+
+// Add indexes for frequently queried fields
+workerSchema.index({ userId: 1 });
+workerSchema.index({ specialty: 1 });
+workerSchema.index({ verificationStatus: 1 });
 
 module.exports = mongoose.model("Worker", workerSchema);

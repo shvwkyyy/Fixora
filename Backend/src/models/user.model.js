@@ -4,19 +4,10 @@ const validator = require("validator");
 
 const userSchema = new mongoose.Schema(
   {
-    FName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    firstName: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
 
-    LName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    Email: {
+    email: {
       type: String,
       required: true,
       unique: true,
@@ -24,75 +15,67 @@ const userSchema = new mongoose.Schema(
       validate: [validator.isEmail, "Invalid email"],
     },
 
-    Password: {
+    password: {
       type: String,
       required: true,
       minlength: 8,
       select: false,
     },
 
-    Phone: {
+    phone: {
       type: String,
       required: true,
       trim: true,
+      validate: {
+        validator: (v) => validator.isMobilePhone(v, "ar-EG"),
+        message: "Invalid phone number",
+      },
     },
 
-    OptionalPhone: {
-      type: String,
-      default: "",
-    },
+    optionalPhone: { type: String, default: "" },
 
-    ProfilePhoto: {
-      type: String,
-      default: "",
-    },
+    profilePhoto: { type: String, default: "" },
 
-    City: {
-      type: String,
-      required: true,
-    },
+    city: { type: String, required: true },
+    area: { type: String, required: true },
 
-    Area: {
-      type: String,
-      required: true,
-    },
-
-    UserType: {
+    userType: {
       type: String,
       enum: ["user", "worker", "admin"],
       default: "user",
     },
 
-    RankScore: {
-      type: Number,
-      default: 0,
-    },
-
-    AppliedJobsCount: {
-      type: Number,
-      default: 0,
-    },
-
-    CompletedJobsCount: {
-      type: Number,
-      default: 0,
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        required: true,
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number],
+        required: true,
+      },
     },
   },
   { timestamps: true }
 );
 
-// Hash password before saving
+// Add indexes for frequently queried fields
+userSchema.index({ email: 1 });
+userSchema.index({ location: "2dsphere" });
+userSchema.index({ userType: 1 });
+
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("Password")) return next();
+  if (!this.isModified("password")) return next();
 
   const salt = await bcrypt.genSalt(10);
-  this.Password = await bcrypt.hash(this.Password, salt);
+  this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
-// Compare Password Method
 userSchema.methods.comparePassword = function (enteredPassword) {
-  return bcrypt.compare(enteredPassword, this.Password);
+  return bcrypt.compare(enteredPassword, this.password);
 };
 
 module.exports = mongoose.model("User", userSchema);

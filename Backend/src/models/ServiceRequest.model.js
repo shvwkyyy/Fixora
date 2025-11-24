@@ -2,21 +2,21 @@ const mongoose = require("mongoose");
 
 const requestSchema = new mongoose.Schema(
     {
-        UserId: {
+        userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
-        WorkerId: {
+        workerId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Worker",
             required: true,
         },
-        Problem_Description: {
+        problemDescription: {
             type: String,
             required: true,
         },
-        Status: {
+        status: {
             type: String,
             enum: ["pending", "accepted", "rejected", "in_progress", "completed"],
             default: "pending",
@@ -24,5 +24,10 @@ const requestSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+// Add indexes for frequently queried fields
+requestSchema.index({ userId: 1, status: 1 });
+requestSchema.index({ workerId: 1, status: 1 });
+requestSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("ServiceRequest", requestSchema);
