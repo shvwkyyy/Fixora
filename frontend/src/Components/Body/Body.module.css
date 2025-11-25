@@ -1,3 +1,9 @@
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .introduction-section {
     margin-top: var(--section-margin);
     margin-bottom: var(--section-margin);
@@ -15,5 +21,45 @@
 
 .services-paragraph {
     font-size: 1rem;
+    color: var(--light-gray);
+}
+
+.services {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+.service {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 24px;
+    border-radius: var(--small-radius);
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+    background: #fff;
+    min-height: 220px;
+    box-sizing: border-box;
+}
+
+.service-logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: color-mix(in oklab, var(--dark-green) 10%, transparent);
+    border-radius: var(--small-radius);
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+}
+
+.service-name {
+    font-weight: 700;
+    font-size: 30px;
+}
+
+.service-description {
     color: var(--light-gray);
 }
