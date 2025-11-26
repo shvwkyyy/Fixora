@@ -18,5 +18,6 @@ const limiter = rateLimit({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(limiter);
+app.use("/api/auth", require("./routes/auth.routes"));
 
 module.exports = app;
