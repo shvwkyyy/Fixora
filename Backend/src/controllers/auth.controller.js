@@ -16,7 +16,7 @@ exports.register = async (req, res) => {
 
     const exists = await User.findOne({ Email });
     if (exists)
-      return res.status(400).json({ message: "Email already exists" });
+      return res.status(400).json({ message: "Wrong Email or Password" });
 
     const hashed = await bcrypt.hash(Password, 10);
 
@@ -42,7 +42,7 @@ exports.register = async (req, res) => {
     });
 
     return res.status(201).json({
-      message: "User Created Successfully",
+      message: "registed successful",
       user,
       accessToken,
       refreshToken,
@@ -138,3 +138,4 @@ exports.getprofile = async (req, res) => {
 exports.logout = async (req, res) => {
   return res.json({ message: "Logout successful (delete tokens from client)" });
 };
+
