@@ -25,6 +25,35 @@ function Body() {
                     return <Services key={index} service={service} />
                 })}
             </div>
+            <section className={styles["how-works-section"]}>
+                <div className={styles["how-works-introduction"]}>
+                    <h2>كيف يعمل</h2>
+                    <p>الحصول على المساعدة لمنزلك لم يكن أسهل من أي وقت مضى</p>
+                </div>
+                <div className={styles["how-works-steps"]}>
+                    <div className={styles["step"]}>
+                        <span>3</span>
+                        <h3>أنجز المهمة</h3>
+                        <p>
+                            استرخ ودع المحترفين يتولون الأمر
+                        </p>
+                    </div>
+                    <div className={styles["step"]}>
+                        <span>2</span>
+                        <h3>احجز وحدد موعد</h3>
+                        <p>
+                            اختر المحترف الخاص بك واحجز وقتاً يناسبك
+                        </p>
+                    </div>
+                    <div className={styles["step"]}>
+                        <span>1</span>
+                        <h3>ابحث وتصفح</h3>
+                        <p>
+                            ابحث عن محترفين في منطقتك حسب نوع الخدمة
+                        </p>
+                    </div>
+                </div>
+            </section>
         </main>
     );
 }

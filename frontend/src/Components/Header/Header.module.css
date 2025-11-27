@@ -84,12 +84,7 @@
 
 .header-section {
     height: 370px;
-    width: 100%;
-    background: linear-gradient(to bottom right,
-            rgba(16, 185, 129, 0.10),
-            rgba(209, 250, 229, 0.50),
-            rgba(52, 211, 153, 0.20));
-
+    background: var(--background-gradient);
     display: flex;
     flex-direction: column;
     justify-content: center;
