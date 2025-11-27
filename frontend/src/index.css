@@ -7,6 +7,7 @@
       rgba(209, 250, 229, 0.50),
       rgba(52, 211, 153, 0.20));
 
+  --dark-green-gradient: color-mix(in oklab, var(--dark-green) 10%, transparent);
   --padding-sm: 5px;
   --padding-md: 16px;
   --margin-md: 16px;
