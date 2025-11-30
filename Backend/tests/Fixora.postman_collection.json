@@ -1,0 +1,290 @@
+{
+  "info": {
+    "_postman_id": "6a512f13-7f34-4a19-a28d-01c82678fb09",
+    "name": "Fixora API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "End-to-end smoke tests for Fixora backend (auth, users, workers, service requests, reviews)."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "workerId", "value": "" },
+    { "key": "requestId", "value": "" },
+    { "key": "reviewId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"email\": \"test+{{$timestamp}}@fixora.dev\",\n  \"password\": \"Password123!\",\n  \"phone\": \"01012345678\",\n  \"city\": \"Cairo\",\n  \"area\": \"Nasr City\",\n  \"userType\": \"user\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@fixora.dev\",\n  \"password\": \"Password123!\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login succeeded', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', json.accessToken || '');",
+                  "pm.collectionVariables.set('refreshToken', json.refreshToken || '');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Refresh Access Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api", "auth", "refresh"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \n  \"refreshToken\": \"{{refreshToken}}\" \n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Refresh token issued', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', json.accessToken || pm.collectionVariables.get('accessToken'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api", "users", "me"] }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api", "users", "me"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"optionalPhone\": \"01000000000\",\n  \"city\": \"Giza\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users?userType=user", "host": ["{{baseUrl}}"], "path": ["api", "users"], "query": [
+              { "key": "userType", "value": "user" }
+            ] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Workers",
+      "item": [
+        {
+          "name": "Upsert My Worker Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/workers/me", "host": ["{{baseUrl}}"], "path": ["api", "workers", "me"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"specialty\": \"Electrician\",\n  \"hourPrice\": 200\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('workerId', json.worker?._id || json.worker?.id || '');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Workers",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/workers?specialty=Electrician", "host": ["{{baseUrl}}"], "path": ["api", "workers"], "query": [
+              { "key": "specialty", "value": "Electrician" }
+            ] }
+          }
+        },
+        {
+          "name": "Get Worker By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/workers/{{workerId}}", "host": ["{{baseUrl}}"], "path": ["api", "workers", "{{workerId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Service Requests",
+      "item": [
+        {
+          "name": "Create Service Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/service-requests", "host": ["{{baseUrl}}"], "path": ["api", "service-requests"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"problemDescription\": \"Lights keep flickering\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('requestId', json.request?._id || json.request?.id || '');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Service Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/service-requests", "host": ["{{baseUrl}}"], "path": ["api", "service-requests"] }
+          }
+        },
+        {
+          "name": "Accept Service Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/service-requests/{{requestId}}/accept", "host": ["{{baseUrl}}"], "path": ["api", "service-requests", "{{requestId}}", "accept"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Create or Update Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/reviews", "host": ["{{baseUrl}}"], "path": ["api", "reviews"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workerId\": \"{{workerId}}\",\n  \"rating\": 5,\n  \"comment\": \"Great service!\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('reviewId', json.review?._id || json.review?.id || '');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Worker Reviews",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/reviews/worker/{{workerId}}", "host": ["{{baseUrl}}"], "path": ["api", "reviews", "worker", "{{workerId}}"] }
+          }
+        },
+        {
+          "name": "Delete Review",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/reviews/{{reviewId}}", "host": ["{{baseUrl}}"], "path": ["api", "reviews", "{{reviewId}}"] }
+          }
+        }
+      ]
+    }
+  ]
+}

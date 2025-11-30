@@ -49,12 +49,11 @@ const userSchema = new mongoose.Schema(
       type: {
         type: String,
         enum: ["Point"],
-        required: true,
         default: "Point",
       },
       coordinates: {
         type: [Number],
-        required: true,
+        default: [0, 0],
       },
     },
   },
@@ -62,16 +61,14 @@ const userSchema = new mongoose.Schema(
 );
 
 // Add indexes for frequently queried fields
-userSchema.index({ email: 1 });
 userSchema.index({ location: "2dsphere" });
 userSchema.index({ userType: 1 });
 
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 userSchema.methods.comparePassword = function (enteredPassword) {

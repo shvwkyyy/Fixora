@@ -54,7 +54,6 @@ const workerSchema = new mongoose.Schema(
 );
 
 // Add indexes for frequently queried fields
-workerSchema.index({ userId: 1 });
 workerSchema.index({ specialty: 1 });
 workerSchema.index({ verificationStatus: 1 });
 

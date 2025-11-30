@@ -8,63 +8,40 @@ const {
 } = require("../utils/jwt");
 
 
+const sanitizeUser = (userDoc) => {
+  if (!userDoc) return null;
+  const plain = userDoc.toObject ? userDoc.toObject() : { ...userDoc };
+  plain.id = plain._id?.toString();
+  delete plain.password;
+  delete plain.__v;
+  return plain;
+};
+
 // REGISTER
 exports.register = async (req, res) => {
   try {
-    const { FName, LName, Email, Password, Phone, City, Area, UserType } = req.body;
+    const { firstName, lastName, email, password, phone, city, area, userType = "user" } = req.body;
 
+    if (!firstName || !lastName || !email || !password || !phone || !city || !area) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
-    const exists = await User.findOne({ Email });
+    const exists = await User.findOne({ email });
     if (exists)
-      return res.status(400).json({ message: "Wrong Email or Password" });
-
-    const hashed = await bcrypt.hash(Password, 10);
+      return res.status(400).json({ message: "Email already registered" });
 
     const user = await User.create({
-      FName,
-      LName,
-      Email,
-      Password: hashed,
-      Phone,
-      City,
-      Area,
-      UserType,
+      firstName,
+      lastName,
+      email,
+      password,
+      phone,
+      city,
+      area,
+      userType,
     });
 
-
-    const accessToken = signAccessToken({
-      id: user._id,
-      role: user.UserType,
-    });
-
-    const refreshToken = signRefreshToken({
-      id: user._id,
-    });
-
-    return res.status(201).json({
-      message: "registed successful",
-      user,
-      accessToken,
-      refreshToken,
-    });
-  } catch (err) {
-    console.error("Register Error:", err);
-    return res.status(500).json({ message: "Server Error" });
-  }
-};
-
-// LOGIN
-exports.login = async (req, res) => {
-  try {
-    const { Email, Password } = req.body;
-
-    const user = await User.findOne({ Email }).select("+Password");
-    if (!user)
-      return res.status(400).json({ message: "Invalid email or password" });
-
-    const valid = await bcrypt.compare(Password, user.Password);
-    if (!valid)
-      return res.status(400).json({ message: "Invalid email or password" });
+    const safeUser = sanitizeUser(user);
 
     const accessToken = signAccessToken({
       id: user._id,
@@ -75,9 +52,49 @@ exports.login = async (req, res) => {
       id: user._id,
     });
 
+    return res.status(201).json({
+      message: "registered successfully",
+      user: safeUser,
+      accessToken,
+      refreshToken,
+    });
+  } catch (err) {
+    console.error("Register Error:", err);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const user = await User.findOne({ email }).select("+password");
+    if (!user)
+      return res.status(400).json({ message: "Invalid email or password" });
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid)
+      return res.status(400).json({ message: "Invalid email or password" });
+
+    const payload = {
+      id: user._id,
+      role: user.userType,
+    };
+
+    const accessToken = signAccessToken(payload);
+
+    const refreshToken = signRefreshToken({
+      id: user._id,
+    });
+
+    const safeUser = sanitizeUser(user);
+
     res.json({
       message: "Login Successful",
-      user,
+      user: safeUser,
       accessToken,
       refreshToken,
     });
@@ -88,8 +105,6 @@ exports.login = async (req, res) => {
   }
 };
 
-
-// REFRESH TOKEN
 exports.refresh = async (req, res) => {
   try {
     const { refreshToken } = req.body;
@@ -106,13 +121,18 @@ exports.refresh = async (req, res) => {
     if (!user)
       return res.status(404).json({ message: "User not found" });
 
-    const newAccess = signAccessToken({
+    const payload = {
       id: user._id,
       role: user.userType,
-    });
+    };
+
+    const newAccessToken = signAccessToken(payload);
+    const newRefreshToken = signRefreshToken({ id: user._id });
 
     res.json({
-      accessToken: newAccess,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      user: sanitizeUser(user),
     });
 
   } catch (err) {
@@ -121,20 +141,18 @@ exports.refresh = async (req, res) => {
   }
 };
 
-
-// GET PROFILE
 exports.getprofile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-Password");
-    return res.json({ user });
+    const userId = req.user?.id || req.user?._id;
+    const user = await User.findById(userId).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    return res.json({ user: sanitizeUser(user) });
   } catch (err) {
     console.error("Me Error:", err);
     return res.status(500).json({ message: "Server Error" });
   }
 };
 
-
-// LOGOUT
 exports.logout = async (req, res) => {
   return res.json({ message: "Logout successful (delete tokens from client)" });
 };
