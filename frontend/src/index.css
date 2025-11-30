@@ -1,0 +1,27 @@
+:root {
+  --dark-green: #10B981;
+  --light-green: #34d399;
+  --light-gray: #64748B;
+  --background-gradient: linear-gradient(to bottom right,
+      rgba(16, 185, 129, 0.10),
+      rgba(209, 250, 229, 0.50),
+      rgba(52, 211, 153, 0.20));
+
+  --dark-green-gradient: color-mix(in oklab, var(--dark-green) 10%, transparent);
+  --padding-sm: 5px;
+  --padding-md: 16px;
+  --margin-md: 16px;
+  --small-font: 1rem;
+  --medium-font: 1.5rem;
+  --big-font: 2.25rem;
+  --small-height: 36px;
+  --small-radius: 8px;
+  --section-margin: 4rem;
+}
+
+
+* {
+  font-family: 'Cairo';
+  padding: 0;
+  margin: 0;
+}
