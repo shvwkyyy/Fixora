@@ -3,10 +3,17 @@ import services from './services';
 import check_logo from '../../assets/check.svg';
 import shield_logo from '../../assets/shield.svg';
 import clock_logo from '../../assets/clock.svg';
+import { useNavigate } from 'react-router-dom';
 
 function Services({ service }) {
+    const navigate = useNavigate();
+
+    const handleClick = () => {
+        navigate('/workers', { state: { specialty: service.name } });
+    };
+
     return (
-        <div className={styles["service"]}>
+        <div className={styles["service"]} onClick={handleClick}>
             <div className={styles["service-logo-container"]}>
                 <img src={service.icon} alt="Icon" />
             </div>

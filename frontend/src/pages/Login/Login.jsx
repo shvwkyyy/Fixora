@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../../utils/api';
 import fixora_logo from '../../assets/fixora-logo.svg';
 import styles from './Login.module.css';
+import { initializeDummyUser } from '../../utils/dummyData';
 
 function Login() {
   const navigate = useNavigate();
@@ -141,6 +142,15 @@ function Login() {
             لا تملك حساباً؟ <Link to="/register">إنشاء حساب جديد</Link>
           </p>
         </form>
+        {/* أزرار تسجيل دخول وهمي - احذفها قبل رفع الكود للمنتج النهائي */}
+        <div style={{marginTop: "12px", display:"flex", flexDirection: "column", gap:8}}>
+          <button type="button" onClick={() => {initializeDummyUser('user'); window.location.href = '/';}} className={styles.submitButton}>
+            تسجيل دخول وهمي (عميل)
+          </button>
+          <button type="button" onClick={() => {initializeDummyUser('worker'); window.location.href = '/worker/dashboard';}} className={styles.submitButton}>
+            تسجيل دخول وهمي (عامل)
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,131 @@
+.worker-profile-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(to bottom right, rgba(16, 185, 129, 0.10), rgba(209, 250, 229, 0.50));
+  direction: rtl;
+}
+
+.worker-profile-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 520px;
+  padding: 2.5rem;
+}
+
+.worker-profile-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.worker-profile-header h2 {
+  color: #1e293b;
+  font-size: 28px;
+  font-weight: 700;
+}
+.worker-profile-header p {
+  color: #64748b;
+  font-size: 16px;
+  margin: 0.5rem 0 0;
+}
+
+.worker-photo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 1.5rem;
+    display: block;
+    border: 3px solid #34d399;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.worker-photo-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: #e2e8f0;
+    color: #64748b;
+    font-size: 48px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    border: 3px solid #34d399;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.worker-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.detail-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.detail-group label {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.detail-text {
+  font-size: 17px;
+  color: #1e293b;
+  background-color: #f8f8f8;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  text-align: right;
+  direction: rtl;
+  font-weight: 600;
+}
+
+.detail-text.verified {
+    color: #10b981;
+    font-weight: bold;
+}
+
+.error {
+    color: #ef4444;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.back-button {
+  display: block;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 8px;
+  background: #34d399;
+  color: white;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  background: #10b981;
+}
+
+@media (max-width: 600px) {
+  .worker-profile-container {
+    padding: 0.5rem;
+  }
+  .worker-profile-card {
+    padding: 1rem;
+  }
+}

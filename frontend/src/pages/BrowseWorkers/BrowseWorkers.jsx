@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { workerAPI } from '../../utils/api';
 import { getDummyData } from '../../utils/dummyData';
 import styles from './BrowseWorkers.module.css';
+import { useLocation } from 'react-router-dom';
 
 const SPECIALTIES = ['سباكة', 'كهرباء', 'تنظيف', 'دهان', 'نجارة', 'إصلاح أجهزة', 'بناء', 'نجارة أثاث', 'سباك صحي', 'أخرى'];
 const SORT_OPTIONS = [
@@ -15,6 +16,7 @@ const SORT_OPTIONS = [
 
 function BrowseWorkers() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [workers, setWorkers] = useState([]);
@@ -41,6 +43,12 @@ function BrowseWorkers() {
   useEffect(() => {
     loadWorkers();
     getUserLocation();
+
+    // Check if a specialty was passed from homepage
+    if (location.state?.specialty && selectedSpecialty !== location.state.specialty) {
+      setSelectedSpecialty(location.state.specialty);
+    }
+
   }, [selectedSpecialty, selectedCity]);
 
   useEffect(() => {
@@ -408,6 +416,11 @@ function BrowseWorkers() {
                       {worker.userId?.city || 'غير محدد'}
                       {worker.userId?.area && ` - ${worker.userId.area}`}
                     </span>
+                  </div>
+                  
+                  <div className={styles['detail-item']}>
+                    <span className={styles['detail-item-icon']}>📞</span>
+                    <span>{worker.userId?.phone || '-'}</span>
                   </div>
                   
                   {worker.distance !== null && (

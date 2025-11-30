@@ -11,6 +11,8 @@ import WorkerDashboard from "./pages/WorkerDashboard/WorkerDashboard";
 import BrowseJobs from "./pages/BrowseJobs/BrowseJobs";
 import MyJobs from "./pages/MyJobs/MyJobs";
 import BrowseWorkers from "./pages/BrowseWorkers/BrowseWorkers";
+import WorkerProfile from "./pages/WorkerProfile/WorkerProfile";
+import Messages from "./pages/Messages/Messages";
 
 // Layout component for pages with Header/Footer
 function Layout({ children }) {
@@ -67,6 +69,19 @@ function App() {
         <Route path="/workers" element={
           <Layout>
             <BrowseWorkers />
+          </Layout>
+        } />
+        {/* Route for individual worker profile */}
+        <Route path="/worker/:id" element={
+          <Layout>
+            <WorkerProfile />
+          </Layout>
+        } />
+
+        {/* Route for messages page */}
+        <Route path="/messages" element={
+          <Layout>
+            <Messages />
           </Layout>
         } />
         

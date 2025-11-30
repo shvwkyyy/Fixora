@@ -7,7 +7,7 @@ function Profile() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({ firstName: '', lastName: '', phone: '', city: '', area: '' });
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(false); // Start in view mode
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -17,7 +17,6 @@ function Profile() {
       setLoading(true);
       try {
         const res = await authAPI.getProfile();
-        // backend: .user object with firstName, lastName, ...
         setProfile(res.user);
         setFormData({
           firstName: res.user.firstName || '',
@@ -27,7 +26,30 @@ function Profile() {
           area: res.user.area || '',
         });
       } catch (e) {
-        setError('لم يتم تحميل الملف الشخصي.');
+        // Try to load from localStorage in demo mode
+        try {
+          const user = JSON.parse(localStorage.getItem('user'));
+          if (user) {
+            setProfile({
+              firstName: user.firstName || '',
+              lastName: user.lastName || '',
+              phone: user.phone || '',
+              city: user.city || '',
+              area: user.area || '',
+            });
+            setFormData({
+              firstName: user.firstName || '',
+              lastName: user.lastName || '',
+              phone: user.phone || '',
+              city: user.city || '',
+              area: user.area || '',
+            });
+          } else {
+            setError('لم يتم تحميل الملف الشخصي.');
+          }
+        } catch {
+          setError('لم يتم تحميل الملف الشخصي.');
+        }
       } finally {
         setLoading(false);
       }
@@ -46,8 +68,11 @@ function Profile() {
     setSaving(true);
     setError('');
     try {
-      // TODO: replace with an updateProfile API if available
-      // For now, just optimistic UI
+      // Update localStorage for dummy data persistence
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+      const updatedUser = { ...storedUser, ...formData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
       setProfile((prev) => ({ ...prev, ...formData }));
       setEditMode(false);
     } catch (err) {
@@ -80,53 +105,68 @@ function Profile() {
         <form className={styles['profile-form']} onSubmit={handleSave}>
           <div className={styles['form-group']}>
             <label>الاسم الأول</label>
-            <input
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              readOnly={!editMode}
-            />
+            {editMode ? (
+              <input
+                type="text"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+              />
+            ) : (
+              <p className={styles['profile-text']}>{profile.firstName}</p>
+            )}
           </div>
           <div className={styles['form-group']}>
             <label>اسم العائلة</label>
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              readOnly={!editMode}
-            />
+            {editMode ? (
+              <input
+                type="text"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+              />
+            ) : (
+              <p className={styles['profile-text']}>{profile.lastName}</p>
+            )}
           </div>
           <div className={styles['form-group']}>
             <label>رقم الهاتف</label>
-            <input
-              type="text"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              readOnly={!editMode}
-            />
+            {editMode ? (
+              <input
+                type="text"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+              />
+            ) : (
+              <p className={styles['profile-text']}>{profile.phone}</p>
+            )}
           </div>
           <div className={styles['form-group']}>
             <label>المدينة</label>
-            <input
-              type="text"
-              name="city"
-              value={formData.city}
-              onChange={handleChange}
-              readOnly={!editMode}
-            />
+            {editMode ? (
+              <input
+                type="text"
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+              />
+            ) : (
+              <p className={styles['profile-text']}>{profile.city}</p>
+            )}
           </div>
           <div className={styles['form-group']}>
             <label>المنطقة</label>
-            <input
-              type="text"
-              name="area"
-              value={formData.area}
-              onChange={handleChange}
-              readOnly={!editMode}
-            />
+            {editMode ? (
+              <input
+                type="text"
+                name="area"
+                value={formData.area}
+                onChange={handleChange}
+              />
+            ) : (
+              <p className={styles['profile-text']}>{profile.area}</p>
+            )}
           </div>
           {error && <div className={styles['error-message']}>{error}</div>}
           <div className={styles['profile-actions']}>

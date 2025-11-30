@@ -108,6 +108,114 @@ export const dummyWorkers = [
   },
 ];
 
+export const dummyNewWorkers = [
+  {
+    _id: 'worker6',
+    userId: {
+      _id: 'user6',
+      firstName: 'سليم',
+      lastName: 'فارس',
+      email: 'salim@example.com',
+      phone: '01234567895',
+      city: 'القاهرة',
+      area: 'الرحاب',
+      profilePhoto: null,
+      userType: 'worker',
+    },
+    specialty: 'إصلاح أجهزة',
+    hourPrice: 250,
+    verificationStatus: 'verified',
+    rankScore: 80,
+    appliedJobsCount: 2,
+    completedJobsCount: 7,
+    createdAt: new Date('2024-03-01'),
+  },
+  {
+    _id: 'worker7',
+    userId: {
+      _id: 'user7',
+      firstName: 'نور',
+      lastName: 'كمال',
+      email: 'nour@example.com',
+      phone: '01234567896',
+      city: 'الجيزة',
+      area: '6 أكتوبر',
+      profilePhoto: null,
+      userType: 'worker',
+    },
+    specialty: 'بناء',
+    hourPrice: 300,
+    verificationStatus: 'pending',
+    rankScore: 75,
+    appliedJobsCount: 1,
+    completedJobsCount: 3,
+    createdAt: new Date('2024-03-05'),
+  },
+  {
+    _id: 'worker8',
+    userId: {
+      _id: 'user8',
+      firstName: 'فادي',
+      lastName: 'عادل',
+      email: 'fady@example.com',
+      phone: '01234567897',
+      city: 'الإسكندرية',
+      area: 'المندرة',
+      profilePhoto: null,
+      userType: 'worker',
+    },
+    specialty: 'نجارة أثاث',
+    hourPrice: 170,
+    verificationStatus: 'verified',
+    rankScore: 89,
+    appliedJobsCount: 6,
+    completedJobsCount: 11,
+    createdAt: new Date('2024-02-20'),
+  },
+  {
+    _id: 'worker9',
+    userId: {
+      _id: 'user9',
+      firstName: 'ليلى',
+      lastName: 'جمال',
+      email: 'layla@example.com',
+      phone: '01234567898',
+      city: 'القاهرة',
+      area: 'التجمع الخامس',
+      profilePhoto: null,
+      userType: 'worker',
+    },
+    specialty: 'سباك صحي',
+    hourPrice: 190,
+    verificationStatus: 'verified',
+    rankScore: 91,
+    appliedJobsCount: 3,
+    completedJobsCount: 9,
+    createdAt: new Date('2024-02-25'),
+  },
+  {
+    _id: 'worker10',
+    userId: {
+      _id: 'user10',
+      firstName: 'مروان',
+      lastName: 'فريد',
+      email: 'marwan@example.com',
+      phone: '01234567899',
+      city: 'الجيزة',
+      area: 'الشيخ زايد',
+      profilePhoto: null,
+      userType: 'worker',
+    },
+    specialty: 'أخرى',
+    hourPrice: 120,
+    verificationStatus: 'pending',
+    rankScore: 60,
+    appliedJobsCount: 0,
+    completedJobsCount: 1,
+    createdAt: new Date('2024-03-10'),
+  },
+];
+
 export const dummyServiceRequests = [
   {
     _id: 'job1',
@@ -316,7 +424,7 @@ export const dummyCurrentUser = {
 export const getDummyData = (type, userId = null) => {
   switch (type) {
     case 'workers':
-      return dummyWorkers;
+      return [...dummyWorkers, ...dummyNewWorkers];
     case 'jobs':
       if (userId) {
         // Return jobs for specific user
