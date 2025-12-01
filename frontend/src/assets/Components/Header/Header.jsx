@@ -1,0 +1,148 @@
+import fixora_logo from '../../assets/fixora-logo.svg';
+import search_glass from '../../assets/search.svg';
+import styles from './Header.module.css';
+import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import notification_icon from '../../assets/notification.svg';
+import { FaUserCircle, FaBell, FaEnvelope } from 'react-icons/fa';
+
+function Header() {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userName, setUserName] = useState('');
+    const [unreadNotifications, setUnreadNotifications] = useState(3); // Dummy notification count
+    const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
+    const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const userToken = localStorage.getItem('accessToken');
+        if (userToken) {
+            setIsLoggedIn(true);
+            try {
+                const userObj = JSON.parse(localStorage.getItem('user'));
+                if (userObj && userObj.firstName) {
+                    setUserName(userObj.firstName);
+                }
+            } catch { setUserName(''); }
+        } else {
+            setIsLoggedIn(false);
+            setUserName('');
+        }
+    }, []);
+
+    // CLOSE DROPDOWN ON CLICK OUTSIDE
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (!e.target.closest('.profile-dropdown-btn') && !e.target.closest('.profile-dropdown-menu')) {
+                setShowProfileDropdown(false);
+            }
+        }
+        if (showProfileDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showProfileDropdown]);
+
+    // LOGOUT FN (نسخ من ملف البروفايل)
+    const handleLogout = async () => {
+        if (window.authAPI && window.authAPI.logout) {
+            await window.authAPI.logout();
+        }
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
+        navigate('/login');
+    };
+
+    return (
+        <>
+            <nav className={styles["header-nav"]}>
+                <div className={styles["nav-content"]}>
+                    {isLoggedIn ? (
+                        <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+                            <button
+                                className={styles["icon-btn"]}
+                                title="الإشعارات"
+                                onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
+                            >
+                                <FaBell size={24} />
+                                {unreadNotifications > 0 && (
+                                    <span className={styles["notification-badge"]}>{unreadNotifications}</span>
+                                )}
+                            </button>
+                            {showNotificationsDropdown && (
+                                <div className={styles["notifications-dropdown"]}>
+                                    <p style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
+                                        لا توجد إشعارات حالياً.
+                                    </p>
+                                </div>
+                            )}
+                            <button 
+                                className={styles["icon-btn"]}
+                                title="الرسائل"
+                                onClick={() => navigate('/messages')}
+                            >
+                                <FaEnvelope size={24} />
+                            </button>
+                            {/* البروفايل DROPDOWN */}
+                            <div style={{position:'relative', display:'inline-block'}}>
+                                <button
+                                    type="button"
+                                    className="profile-dropdown-btn"
+                                    style={{background:'transparent', border:'none', display:'flex',alignItems:'center', cursor:'pointer'}}
+                                    onClick={() => setShowProfileDropdown(v => !v)}
+                                >
+                                    <FaUserCircle size={28} style={{verticalAlign:'middle'}}/>
+                                    <span style={{marginInlineStart:4}}>{userName && userName.length <= 8 ? userName : "حسابي"}</span>
+                                </button>
+                                {showProfileDropdown && (
+                                    <div className="profile-dropdown-menu" style={{position:'absolute',top:'110%',left:0,background:'#fff',boxShadow:'0 2px 8px rgba(0,0,0,0.08)',borderRadius:10,minWidth:140, zIndex:100}}>
+                                        <button
+                                            style={{padding:'10px 16px',width:'100%',background:'none',border:'none',textAlign:'right',cursor:'pointer',fontSize:'1rem'}}
+                                            onClick={()=>{setShowProfileDropdown(false); navigate('/profile')}}>
+                                            الملف الشخصي
+                                        </button>
+                                        <div style={{height:1,background:'#e0e0e0', margin:'2px 0'}}/>
+                                        <button
+                                            style={{padding:'10px 16px',width:'100%',background:'none',border:'none',textAlign:'right',color:'#dc2626',cursor:'pointer',fontSize:'1rem'}}
+                                            onClick={handleLogout}
+                                        >
+                                            تسجيل الخروج
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <Link to="/register" className={styles["sign-up-btn"]}>إنشاء حساب</Link>
+                            <Link to="/login" className={styles["login-btn"]}>تسجيل دخول</Link>
+                        </>
+                    )}
+                    <button className={styles["search-btn"]}>
+                        <span>ابحث عن عمال</span>
+                        <img src={search_glass} alt="search glass" />
+                    </button>
+                </div>
+                <div className={styles["nav-content-links"]}>
+                    <a href="#about-us">من نحن</a>
+                    <a href="#how-works">كيف يعمل</a>
+                    <a href="#services">الخدمات</a>
+                    <Link to="/">
+                        <img src={fixora_logo} alt="fixora logo" />
+                    </Link>
+                </div>
+            </nav>
+            <header>
+                <section className={styles["header-section"]}>
+                    <h1>خدمات منزلية سهلة وبسيطة</h1>
+                    <p className={styles["header-paragraph"]}>تواصل مع محترفين موثوقين لجميع احتياجات الخدمات المنزلية. من السباكة إلى الدهان، التنظيف إلى الإصلاحات - نحن</p>
+                    <p className={styles["header-paragraph"]}>. هنا لخدمتك</p>
+                </section>
+            </header>
+        </>
+    );
+}
+
+export default Header
