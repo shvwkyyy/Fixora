@@ -11,6 +11,7 @@ function Header() {
     const [userName, setUserName] = useState('');
     const [unreadNotifications, setUnreadNotifications] = useState(3); // Dummy notification count
     const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
+    const [showProfileDropdown, setShowProfileDropdown] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -28,6 +29,31 @@ function Header() {
             setUserName('');
         }
     }, []);
+
+    // CLOSE DROPDOWN ON CLICK OUTSIDE
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (!e.target.closest('.profile-dropdown-btn') && !e.target.closest('.profile-dropdown-menu')) {
+                setShowProfileDropdown(false);
+            }
+        }
+        if (showProfileDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showProfileDropdown]);
+
+    // LOGOUT FN (نسخ من ملف البروفايل)
+    const handleLogout = async () => {
+        if (window.authAPI && window.authAPI.logout) {
+            await window.authAPI.logout();
+        }
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
+        navigate('/login');
+    };
 
     return (
         <>
@@ -59,12 +85,34 @@ function Header() {
                             >
                                 <FaEnvelope size={24} />
                             </button>
-                            <Link to="/profile" className={styles["profile-link"]} title="الملف الشخصي">
-                                <div style={{position: 'relative', display: 'inline-block'}}>
-                                    <FaUserCircle size={28} style={{ verticalAlign: 'middle'}}/>
-                                </div>
-                                <span>{userName && userName.length <= 8 ? userName : "حسابي"}</span>
-                            </Link>
+                            {/* البروفايل DROPDOWN */}
+                            <div style={{position:'relative', display:'inline-block'}}>
+                                <button
+                                    type="button"
+                                    className="profile-dropdown-btn"
+                                    style={{background:'transparent', border:'none', display:'flex',alignItems:'center', cursor:'pointer'}}
+                                    onClick={() => setShowProfileDropdown(v => !v)}
+                                >
+                                    <FaUserCircle size={28} style={{verticalAlign:'middle'}}/>
+                                    <span style={{marginInlineStart:4}}>{userName && userName.length <= 8 ? userName : "حسابي"}</span>
+                                </button>
+                                {showProfileDropdown && (
+                                    <div className="profile-dropdown-menu" style={{position:'absolute',top:'110%',left:0,background:'#fff',boxShadow:'0 2px 8px rgba(0,0,0,0.08)',borderRadius:10,minWidth:140, zIndex:100}}>
+                                        <button
+                                            style={{padding:'10px 16px',width:'100%',background:'none',border:'none',textAlign:'right',cursor:'pointer',fontSize:'1rem'}}
+                                            onClick={()=>{setShowProfileDropdown(false); navigate('/profile')}}>
+                                            الملف الشخصي
+                                        </button>
+                                        <div style={{height:1,background:'#e0e0e0', margin:'2px 0'}}/>
+                                        <button
+                                            style={{padding:'10px 16px',width:'100%',background:'none',border:'none',textAlign:'right',color:'#dc2626',cursor:'pointer',fontSize:'1rem'}}
+                                            onClick={handleLogout}
+                                        >
+                                            تسجيل الخروج
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ) : (
                         <>

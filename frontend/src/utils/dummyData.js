@@ -21,6 +21,11 @@ export const dummyWorkers = [
     appliedJobsCount: 5,
     completedJobsCount: 12,
     createdAt: new Date('2024-01-15'),
+    images: [
+      'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1520880867055-1e30d1cb001c?auto=format&fit=crop&w=300&q=80',
+    ],
+    rating: 4.8,
   },
   {
     _id: 'worker2',
@@ -42,6 +47,12 @@ export const dummyWorkers = [
     appliedJobsCount: 3,
     completedJobsCount: 8,
     createdAt: new Date('2024-02-10'),
+    images: [
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1454023492550-5696f8ff10e1?auto=format&fit=crop&w=300&q=80',
+    ],
+    rating: 4.6,
   },
   {
     _id: 'worker3',
@@ -63,6 +74,7 @@ export const dummyWorkers = [
     appliedJobsCount: 7,
     completedJobsCount: 15,
     createdAt: new Date('2024-01-20'),
+    rating: 4.9,
   },
   {
     _id: 'worker4',
@@ -84,6 +96,7 @@ export const dummyWorkers = [
     appliedJobsCount: 4,
     completedJobsCount: 10,
     createdAt: new Date('2024-02-05'),
+    rating: 4.2,
   },
   {
     _id: 'worker5',
@@ -105,6 +118,7 @@ export const dummyWorkers = [
     appliedJobsCount: 6,
     completedJobsCount: 14,
     createdAt: new Date('2024-01-25'),
+    rating: 4.5,
   },
 ];
 
@@ -129,6 +143,7 @@ export const dummyNewWorkers = [
     appliedJobsCount: 2,
     completedJobsCount: 7,
     createdAt: new Date('2024-03-01'),
+    rating: 3.9,
   },
   {
     _id: 'worker7',
@@ -150,6 +165,7 @@ export const dummyNewWorkers = [
     appliedJobsCount: 1,
     completedJobsCount: 3,
     createdAt: new Date('2024-03-05'),
+    rating: 4.0,
   },
   {
     _id: 'worker8',
@@ -171,6 +187,7 @@ export const dummyNewWorkers = [
     appliedJobsCount: 6,
     completedJobsCount: 11,
     createdAt: new Date('2024-02-20'),
+    rating: 3.5,
   },
   {
     _id: 'worker9',
@@ -192,6 +209,7 @@ export const dummyNewWorkers = [
     appliedJobsCount: 3,
     completedJobsCount: 9,
     createdAt: new Date('2024-02-25'),
+    rating: 4.7,
   },
   {
     _id: 'worker10',
@@ -213,6 +231,7 @@ export const dummyNewWorkers = [
     appliedJobsCount: 0,
     completedJobsCount: 1,
     createdAt: new Date('2024-03-10'),
+    rating: 3.7,
   },
 ];
 

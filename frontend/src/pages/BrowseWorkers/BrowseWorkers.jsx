@@ -30,6 +30,7 @@ function BrowseWorkers() {
   const [maxPrice, setMaxPrice] = useState('');
   const [sortBy, setSortBy] = useState('rating');
   const [userLocation, setUserLocation] = useState(null);
+  const [minRating, setMinRating] = useState(''); // فلتر التقييم
   
   // Cities from Egyptian governorates
   const EGYPT_CITIES = [
@@ -53,7 +54,7 @@ function BrowseWorkers() {
 
   useEffect(() => {
     applyFilters();
-  }, [workers, selectedSpecialty, selectedCity, selectedDistance, minPrice, maxPrice, sortBy, userLocation]);
+  }, [workers, selectedSpecialty, selectedCity, selectedDistance, minPrice, maxPrice, sortBy, userLocation, minRating]);
 
   const getUserLocation = () => {
     if (navigator.geolocation) {
@@ -154,47 +155,43 @@ function BrowseWorkers() {
   const applyFilters = () => {
     let filtered = [...workers];
 
-    // Filter by distance
+    // فلتر التخصص (أسود)
+    if (selectedSpecialty) {
+      filtered = filtered.filter(w => w.specialty === selectedSpecialty);
+    }
+    // فلتر المدينة (بينك)
+    if (selectedCity) {
+      filtered = filtered.filter(w => w.userId?.city === selectedCity);
+    }
+    // فلتر المسافة (لو مفعل)
     if (selectedDistance !== 'all' && userLocation) {
       const maxDistance = parseFloat(selectedDistance);
-      filtered = filtered.filter(worker => {
-        if (!worker.distance) return false;
-        return worker.distance <= maxDistance;
-      });
+      filtered = filtered.filter(w => w.distance && w.distance <= maxDistance);
     }
-
-    // Filter by price range
+    // فلتر السعر (أحمر)
     if (minPrice) {
-      const min = parseFloat(minPrice);
-      filtered = filtered.filter(worker => {
-        return worker.hourPrice >= min;
-      });
+      filtered = filtered.filter(w => Number(w.hourPrice) >= Number(minPrice));
     }
-    
     if (maxPrice) {
-      const max = parseFloat(maxPrice);
-      filtered = filtered.filter(worker => {
-        return worker.hourPrice <= max;
-      });
+      filtered = filtered.filter(w => Number(w.hourPrice) <= Number(maxPrice));
+    }
+    // فلتر التقييم (أصفر) -- لو ليس لديه rating يعتبر 0
+    if (minRating) {
+      filtered = filtered.filter(w => Number(w.rating ?? 0) >= Number(minRating));
     }
 
-    // Sort workers
+    // فلترة/فرز حسب sort
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'rating':
-          return (b.rating || 0) - (a.rating || 0);
-        case 'price-low':
-          return (a.hourPrice || 0) - (b.hourPrice || 0);
-        case 'price-high':
-          return (b.hourPrice || 0) - (a.hourPrice || 0);
+        case 'rating': return (b.rating || 0) - (a.rating || 0);
+        case 'price-low': return (a.hourPrice || 0) - (b.hourPrice || 0);
+        case 'price-high': return (b.hourPrice || 0) - (a.hourPrice || 0);
         case 'distance':
           if (!a.distance) return 1;
           if (!b.distance) return -1;
           return a.distance - b.distance;
-        case 'newest':
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        default:
-          return 0;
+        case 'newest': return new Date(b.createdAt) - new Date(a.createdAt);
+        default: return 0;
       }
     });
 
@@ -208,6 +205,7 @@ function BrowseWorkers() {
     setMinPrice('');
     setMaxPrice('');
     setSortBy('rating');
+    setMinRating(''); // Clear rating filter
   };
 
   const renderStars = (rating) => {
@@ -251,7 +249,7 @@ function BrowseWorkers() {
       <div className={styles['filters-section']}>
         <div className={styles['filters-header']}>
           <h3>تصفية الصنايعيين</h3>
-          {(selectedSpecialty || selectedCity || selectedDistance !== 'all' || minPrice || maxPrice) && (
+          {(selectedSpecialty || selectedCity || selectedDistance !== 'all' || minPrice || maxPrice || minRating) && (
             <button className={styles['clear-filters']} onClick={clearFilters}>
               مسح الفلاتر
             </button>
@@ -328,6 +326,23 @@ function BrowseWorkers() {
               />
             </div>
           </div>
+
+          {/* فلتر التقييم (أصفر) */}
+          <div className={styles['filter-group']}>
+            <label htmlFor="rating">التقييم</label>
+            <select
+              id="rating"
+              value={minRating}
+              onChange={e => setMinRating(e.target.value)}
+            >
+              <option value="">كل التقييمات</option>
+              <option value="5">5 نجوم</option>
+              <option value="4.5">4.5+</option>
+              <option value="4">4+</option>
+              <option value="3.5">3.5+</option>
+              <option value="3">3+</option>
+            </select>
+          </div>
         </div>
 
         <div className={styles['sort-section']}>
@@ -358,7 +373,7 @@ function BrowseWorkers() {
             <div className={styles['empty-state-icon']}>🔍</div>
             <h3>لا يوجد صنايعيين متاحين</h3>
             <p>
-              {selectedSpecialty || selectedCity || selectedDistance !== 'all' || minPrice || maxPrice
+              {selectedSpecialty || selectedCity || selectedDistance !== 'all' || minPrice || maxPrice || minRating
                 ? 'جرب تغيير الفلاتر للعثور على المزيد من الصنايعيين'
                 : 'لا يوجد صنايعيين متاحين حالياً. تحقق لاحقاً!'}
             </p>

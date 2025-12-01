@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Messages.module.css';
+import { useLocation } from 'react-router-dom';
 
 function Messages() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [activeChat, setActiveChat] = useState(null); // Represents the active conversation ID
+  const [conversations, setConversations] = useState([]); // محادثات قابلة للتعديل
+  const location = useLocation();
 
   const dummyConversations = [
     { id: 'chat1', participant: 'أحمد سباكة', lastMessage: 'تمام، هجيلك بكرة.' },
@@ -27,9 +30,44 @@ function Messages() {
     ],
   };
 
+  // مساعدة: parse query string
+  function getQueryParam(param) {
+    const params = new URLSearchParams(location.search);
+    return params.get(param);
+  }
+
+  // إحضار البيانات الوهمية عند أول تحميل
+  useEffect(() => {
+    setConversations([...dummyConversations]);
+  }, []);
+
+  // التعامل مع workerId إذا أتى بالرابط
+  useEffect(() => {
+    const workerId = getQueryParam('workerId');
+    const workerName = getQueryParam('workerName');
+    if (workerId && workerName) {
+      // ابحث عن محادثة باسم العامل
+      let found = conversations.find(c => c.participant === workerName);
+      if (found) {
+        setActiveChat(found.id);
+      } else {
+        // أنشئ محادثة جديدة
+        const newId = `chat_w_${workerId}`;
+        const newConv = { id: newId, participant: workerName, lastMessage: '' };
+        setConversations(prev => [...prev, newConv]);
+        setActiveChat(newId);
+      }
+    }
+  // conversations في الدبندنسي عشان أي محادثة جديدة تضاف يتم فحصها
+  // لكن location.search كذلك لتتبع التغيير
+  }, [location.search, conversations]);
+
+  // جلب الرسائل بناءً على activeChat
   useEffect(() => {
     if (activeChat && dummyChatMessages[activeChat]) {
       setMessages(dummyChatMessages[activeChat]);
+    } else if (activeChat) {
+      setMessages([]); // أول محادثة جديدة فارغة
     } else {
       setMessages([]);
     }
@@ -53,7 +91,7 @@ function Messages() {
     <div className={styles['messages-container']}>
       <div className={styles['conversations-list']}>
         <h2>محادثاتي</h2>
-        {dummyConversations.map((conv) => (
+        {conversations.map((conv) => (
           <div
             key={conv.id}
             className={`${styles['conversation-item']} ${activeChat === conv.id ? styles.active : ''}`}

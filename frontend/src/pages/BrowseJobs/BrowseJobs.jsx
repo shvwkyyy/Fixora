@@ -145,12 +145,12 @@ function BrowseJobs() {
   const applyFilters = () => {
     let filtered = [...jobs];
 
-    // Filter by specialty (if job has specialty field, otherwise show all)
+    // Filter by specialty (تفعيل الفلتر فعليًا)
     if (selectedSpecialty) {
-      // Note: Service requests might not have specialty field directly
-      // This would need backend support or filtering by worker specialty matching
-      // For now, we'll show all jobs if specialty filter is selected
-      // In real implementation, backend would filter by matching worker specialty
+      filtered = filtered.filter(
+        job => (job.specialty && job.specialty === selectedSpecialty)
+                // دعم لو فيه specialty في بيانات العمل، وإلا تجاهل
+      );
     }
 
     // Filter by distance
@@ -210,6 +210,25 @@ function BrowseJobs() {
       <div className={styles['real-time-badge']}>
         <span className={styles['real-time-dot']}></span>
         <span>تحديثات مباشرة</span>
+      </div>
+
+      {/* أزرار التخصصات (categories as buttons) */}
+      <div style={{margin:'0 0 18px 0', display:'flex',gap:10,flexWrap:'wrap',justifyContent:'flex-start'}}>
+        {SPECIALTIES.map(spec=>(
+          <button
+            key={spec}
+            onClick={()=>setSelectedSpecialty(spec)}
+            style={{
+              background:selectedSpecialty===spec?'#26b176':'#f3f5f6',
+              color:selectedSpecialty===spec?'#fff':'#222',
+              border:'none', minWidth:76, borderRadius:17,padding:'9px 18px',fontSize:'1rem', cursor:'pointer',boxShadow:'0 1px 5px #0001',transition:'background 0.2s,color 0.2s'}}
+          >
+            {spec}
+          </button>
+        ))}
+        {selectedSpecialty && (
+          <button onClick={()=>setSelectedSpecialty('')} style={{background:'#ececec',color:'#26b176',marginInlineStart:10,border:'none',borderRadius:14,padding:'7px 17px',cursor:'pointer',fontWeight:'bold'}}>كل التخصصات</button>
+        )}
       </div>
 
       {/* Filters Section */}

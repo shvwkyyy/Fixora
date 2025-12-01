@@ -16,6 +16,7 @@ function WorkerProfile() {
   const [worker, setWorker] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [openedImage, setOpenedImage] = useState(null); // للتحكم بالصورة المفتوحة
 
   useEffect(() => {
     const fetchWorkerProfile = async () => {
@@ -81,21 +82,33 @@ function WorkerProfile() {
 
   return (
     <div className={styles['worker-profile-container']}>
-      <div className={styles['worker-profile-card']}>
-        <div className={styles['worker-profile-header']}>
+      <div className={styles['worker-profile-card']} style={{maxWidth:'400px', margin:'0 auto'}}>
+        <div className={styles['worker-profile-header']} style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
           {worker.userId?.profilePhoto ? (
             <img
               src={worker.userId.profilePhoto}
               alt={`${worker.userId.firstName} ${worker.userId.lastName}`}
               className={styles['worker-photo']}
+              style={{width: 92, height: 92, borderRadius:'50%', objectFit:'cover', marginBottom: 16, boxShadow: '0 4px 18px rgba(0,0,0,0.09)'}}
             />
           ) : (
-            <div className={styles['worker-photo-placeholder']}>
+            <div className={styles['worker-photo-placeholder']} style={{width: 92, height: 92, borderRadius: '50%', background: '#e5e5e5',display:'flex',alignItems:'center',justifyContent:'center', fontSize:'2.7rem',marginBottom: 16, color:'#555',fontWeight:600}}>
               {getInitials(worker.userId?.firstName, worker.userId?.lastName)}
             </div>
           )}
-          <h2>{worker.userId?.firstName} {worker.userId?.lastName}</h2>
-          <p>{worker.specialty}</p>
+          <h2 style={{marginBottom: 4}}>{worker.userId?.firstName} {worker.userId?.lastName}</h2>
+          <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
+            <span style={{background:'#e3f9ee',color:'#1ba37a',borderRadius:12,padding:'2px 10px',fontSize:'0.98rem'}}>{worker.specialty}</span>
+            {worker.verificationStatus === 'verified' && (
+              <span style={{color:'#3bb94c', fontWeight:600, fontSize:'1.1rem'}}>✓ موثق</span>
+            )}
+          </div>
+          <button 
+            style={{margin:'8px 0 0 0', background:'#26B176', color:'#fff',padding:'8px 26px',fontSize:'1.03rem', border:'none', borderRadius:17, cursor:'pointer',fontWeight:600}}
+            onClick={()=>navigate(`/messages?workerId=${worker._id}&workerName=${encodeURIComponent(worker.userId?.firstName + ' ' + worker.userId?.lastName || '')}`)}
+          >
+            أرسل رسالة
+          </button>
         </div>
         <div className={styles['worker-details']}>
           <div className={styles['detail-group']}>
@@ -118,15 +131,32 @@ function WorkerProfile() {
             <label>رقم الهاتف:</label>
             <p className={styles['detail-text']}>{worker.userId?.phone}</p>
           </div>
-          {worker.verificationStatus === 'verified' && (
-            <div className={styles['detail-group']}>
-              <label>حالة التوثيق:</label>
-              <p className={`${styles['detail-text']} ${styles.verified}`}>✓ موثق</p>
-            </div>
-          )}
-          {/* Add more worker details here if available */}
         </div>
-        <button onClick={() => navigate('/workers')} className={styles['back-button']}>
+        {/* معرض الأعمال (Gallery) */}
+        {Array.isArray(worker.images) && worker.images.length > 0 && (
+          <div className={styles['gallery-section']} style={{margin:'18px 0'}}>
+            <h3 style={{margin:'0 0 10px 0', fontSize:'1.04rem', color:'#27ae60',textAlign:'right',letterSpacing:'0.2px'}}>معرض الأعمال</h3>
+            <div style={{display:'flex',gap:9,flexWrap:'wrap'}}>
+              {worker.images.map((img, i)=>(
+                <img key={i} src={img} alt={`عمل ${i+1}`} 
+                  style={{width:98,height:98,objectFit:'cover',borderRadius:10,border:'1px solid #eee',boxShadow:'0 2px 8px #0001', cursor:'pointer'}}
+                  onClick={()=>setOpenedImage(img)}
+                />
+              ))}
+            </div>
+            {openedImage && (
+              <div style={{position:'fixed',top:0,left:0,width:'100vw',height:'100vh',zIndex:5000,background:'rgba(46,58,70,0.79)',display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setOpenedImage(null)}>
+                <div style={{position:'relative',maxWidth:'92vw',maxHeight:'80vh'}} onClick={e=>e.stopPropagation()}>
+                  <img src={openedImage} alt="صورة مكبرة" style={{maxWidth:'92vw',maxHeight:'80vh',borderRadius:18,boxShadow:'0 4px 32px #0005',background:'#fff'}} />
+                  <button aria-label="إغلاق" onClick={()=>setOpenedImage(null)}
+                    style={{position:'absolute',top:-10,right:-10,background:'#fff',border:'none',borderRadius:30,width:34,height:34,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px #0005',cursor:'pointer',fontSize:'1.5rem'}}
+                  >×</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        <button onClick={() => navigate('/workers')} className={styles['back-button']} style={{marginTop:12}}>
           العودة لتصفح الصنايعيين
         </button>
       </div>
