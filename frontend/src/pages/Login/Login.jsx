@@ -56,7 +56,7 @@ function Login() {
         localStorage.setItem('user', JSON.stringify(response.user));
       }
       // Redirect based on user type
-      const userType = response.user?.UserType || response.user?.userType;
+      const userType = response.user?.userType || response.user?.UserType;
       if (userType === 'worker') {
         navigate('/worker/dashboard');
       } else {

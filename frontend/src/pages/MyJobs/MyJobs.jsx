@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI, serviceRequestAPI } from '../../utils/api';
-import { getDummyData, dummyCurrentUser } from '../../utils/dummyData';
 import styles from './MyJobs.module.css';
 
 function MyJobs() {
@@ -38,27 +37,14 @@ function MyJobs() {
       let user = JSON.parse(localStorage.getItem('user') || '{}');
       let userId = user.id || user._id;
       
-      // Use dummy user if not logged in (for testing)
       if (!userId) {
-        const { initializeDummyUser } = require('../../utils/dummyData');
-        user = initializeDummyUser('user');
-        userId = user.id;
+        navigate('/login');
+        return;
       }
 
       // Load all jobs for this user
-      let response;
-      try {
-        response = await serviceRequestAPI.getAll({ userId });
-      } catch (e) {
-        response = { requests: [] };
-      }
-      
-      let allJobs = response.requests || [];
-      
-      // Use dummy data if empty
-      if (allJobs.length === 0) {
-        allJobs = getDummyData('jobs', userId);
-      }
+      const response = await serviceRequestAPI.getAll({ userId });
+      const allJobs = response.requests || [];
       
       // Categorize jobs by status
       const active = allJobs.filter(job => job.status === 'pending' && !job.assignedWorker);
@@ -209,7 +195,7 @@ function MyJobs() {
         <div className={styles['job-card-actions']}>
           <button
             className={`${styles.btn} ${styles['btn-secondary']}`}
-            onClick={() => navigate(`/jobs/${job._id}`)}
+            onClick={() => navigate(`/jobs/${job._id}/details`)}
           >
             عرض التفاصيل
           </button>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { workerAPI } from '../../utils/api';
 import styles from './WorkerRegister.module.css';
 
 const SPECIALTIES = ['سباكة', 'كهرباء', 'تنظيف', 'دهان', 'نجارة', 'إصلاح أجهزة', 'بناء', 'نجارة أثاث', 'سباك صحي', 'أخرى'];
@@ -42,11 +43,40 @@ function WorkerRegister() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
-    // TODO: connect to backend
-    setTimeout(() => {
-      setStatus('قيد المراجعة');
+    
+    try {
+      // Prepare data for backend
+      const workerData = {
+        specialty: form.specialty,
+        hourlyRate: form.hourlyRate,
+        hourPrice: form.hourlyRate, // Backend uses hourPrice
+        facebook: form.facebook,
+        tiktok: form.tiktok,
+        linkedin: form.linkedin,
+        nationalIdFront: form.nationalIdFront,
+        nationalIdBack: form.nationalIdBack,
+        idSelfie: form.idSelfie,
+      };
+
+      // Call API to update/create worker profile
+      const response = await workerAPI.updateMyProfile(workerData);
+      
+      if (response.ok && response.worker) {
+        setStatus('قيد المراجعة');
+        // Optionally navigate to dashboard or show success message
+        setTimeout(() => {
+          navigate('/worker/dashboard');
+        }, 1500);
+      } else {
+        setError('فشل إرسال الطلب. يرجى المحاولة مرة أخرى.');
+      }
+    } catch (err) {
+      console.error('Worker register error:', err);
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'فشل إرسال الطلب. يرجى المحاولة مرة أخرى.';
+      setError(errorMessage);
+    } finally {
       setSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (

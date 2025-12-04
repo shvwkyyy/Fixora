@@ -134,24 +134,12 @@ function Register() {
 
       const response = await authAPI.register(registerData);
 
-      // Store tokens
-      if (response.accessToken && response.refreshToken) {
-        localStorage.setItem('accessToken', response.accessToken);
-        localStorage.setItem('refreshToken', response.refreshToken);
-      }
-
-      // Store user data
-      if (response.user) {
-        localStorage.setItem('user', JSON.stringify(response.user));
-      }
-
-      // Redirect based on user type (handle both UserType and userType)
-      const userType = response.user?.UserType || response.user?.userType;
-      if (userType === 'worker') {
-        navigate('/worker/register');
-      } else {
-        navigate('/');
-      }
+      // Don't store tokens - user needs to login first
+      // Show success message and redirect to login
+      alert('تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول الآن.');
+      
+      // Redirect to login page
+      navigate('/login');
     } catch (error) {
       const errorMessage =
         error.response?.data?.message || 'حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.';

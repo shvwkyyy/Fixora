@@ -147,9 +147,33 @@ const getCompletedServicesForWorker = async (req, res) => {
   }
 };
 
+const getServiceRequestById = async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    if (!requestId) {
+      return res.status(400).json({ ok: false, error: "request id required" });
+    }
+
+    const request = await ServiceRequest.findById(requestId)
+      .populate('userId', 'firstName lastName email phone city area profilePhoto')
+      .populate('assignedWorker', 'userId specialty hourPrice')
+      .lean();
+
+    if (!request) {
+      return res.status(404).json({ ok: false, error: "service request not found" });
+    }
+
+    return res.json({ ok: true, request });
+  } catch (err) {
+    console.error('get service request by id error', err);
+    return res.status(500).json({ ok: false, error: 'internal error' });
+  }
+};
+
 module.exports = {
   PostService,
   acceptService,
   getAllServiceRequests,
   getCompletedServicesForWorker,
+  getServiceRequestById,
 };

@@ -20,14 +20,63 @@ function Header() {
             setIsLoggedIn(true);
             try {
                 const userObj = JSON.parse(localStorage.getItem('user'));
-                if (userObj && userObj.firstName) {
-                    setUserName(userObj.firstName);
+                if (userObj) {
+                    // Show full name if available, otherwise first name, otherwise email
+                    if (userObj.firstName && userObj.lastName) {
+                        const fullName = `${userObj.firstName} ${userObj.lastName}`;
+                        setUserName(fullName.length > 20 ? userObj.firstName : fullName);
+                    } else if (userObj.firstName) {
+                        setUserName(userObj.firstName);
+                    } else if (userObj.email) {
+                        setUserName(userObj.email.split('@')[0]);
+                    } else {
+                        setUserName('حسابي');
+                    }
+                } else {
+                    setUserName('حسابي');
                 }
-            } catch { setUserName(''); }
+            } catch { 
+                setUserName('حسابي'); 
+            }
         } else {
             setIsLoggedIn(false);
             setUserName('');
         }
+    }, []);
+
+    // Listen for storage changes to update user name when profile is updated
+    useEffect(() => {
+        const handleStorageChange = () => {
+            const userToken = localStorage.getItem('accessToken');
+            if (userToken) {
+                try {
+                    const userObj = JSON.parse(localStorage.getItem('user'));
+                    if (userObj) {
+                        if (userObj.firstName && userObj.lastName) {
+                            const fullName = `${userObj.firstName} ${userObj.lastName}`;
+                            setUserName(fullName.length > 20 ? userObj.firstName : fullName);
+                        } else if (userObj.firstName) {
+                            setUserName(userObj.firstName);
+                        } else if (userObj.email) {
+                            setUserName(userObj.email.split('@')[0]);
+                        } else {
+                            setUserName('حسابي');
+                        }
+                    }
+                } catch {
+                    setUserName('حسابي');
+                }
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        // Also listen for custom event when localStorage is updated in same tab
+        window.addEventListener('localStorageUpdated', handleStorageChange);
+        
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('localStorageUpdated', handleStorageChange);
+        };
     }, []);
 
     // CLOSE DROPDOWN ON CLICK OUTSIDE
@@ -94,7 +143,7 @@ function Header() {
                                     onClick={() => setShowProfileDropdown(v => !v)}
                                 >
                                     <FaUserCircle size={28} style={{verticalAlign:'middle'}}/>
-                                    <span style={{marginInlineStart:4}}>{userName && userName.length <= 8 ? userName : "حسابي"}</span>
+                                    <span style={{marginInlineStart:4}}>{userName || "حسابي"}</span>
                                 </button>
                                 {showProfileDropdown && (
                                     <div className="profile-dropdown-menu" style={{position:'absolute',top:'110%',left:0,background:'#fff',boxShadow:'0 2px 8px rgba(0,0,0,0.08)',borderRadius:10,minWidth:140, zIndex:100}}>
@@ -120,7 +169,10 @@ function Header() {
                             <Link to="/login" className={styles["login-btn"]}>تسجيل دخول</Link>
                         </>
                     )}
-                    <button className={styles["search-btn"]}>
+                    <button 
+                        className={styles["search-btn"]}
+                        onClick={() => navigate('/workers')}
+                    >
                         <span>ابحث عن عمال</span>
                         <img src={search_glass} alt="search glass" />
                     </button>

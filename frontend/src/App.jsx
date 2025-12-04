@@ -13,6 +13,8 @@ import MyJobs from "./pages/MyJobs/MyJobs";
 import BrowseWorkers from "./pages/BrowseWorkers/BrowseWorkers";
 import WorkerProfile from "./pages/WorkerProfile/WorkerProfile";
 import Messages from "./pages/Messages/Messages";
+import CreateServiceRequest from "./pages/CreateServiceRequest/CreateServiceRequest";
+import ServiceRequestDetails from "./pages/ServiceRequestDetails/ServiceRequestDetails";
 
 // Layout component for pages with Header/Footer
 function Layout({ children }) {
@@ -63,6 +65,18 @@ function App() {
         <Route path="/jobs" element={
           <Layout>
             <MyJobs />
+          </Layout>
+        } />
+
+        <Route path="/jobs/create" element={
+          <Layout>
+            <CreateServiceRequest />
+          </Layout>
+        } />
+
+        <Route path="/jobs/:id/details" element={
+          <Layout>
+            <ServiceRequestDetails />
           </Layout>
         } />
 

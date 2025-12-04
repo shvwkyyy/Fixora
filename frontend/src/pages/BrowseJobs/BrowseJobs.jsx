@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI, serviceRequestAPI } from '../../utils/api';
-import { getDummyData } from '../../utils/dummyData';
 import styles from './BrowseJobs.module.css';
 
 const SPECIALTIES = ['سباكة', 'كهرباء', 'تنظيف', 'دهان', 'نجارة', 'إصلاح أجهزة', 'بناء', 'نجارة أثاث', 'سباك صحي', 'أخرى'];
@@ -83,19 +82,13 @@ function BrowseJobs() {
 
       // Fetch pending service requests (available jobs)
       const response = await serviceRequestAPI.getAll({ status: 'pending' });
-      let jobsList = response.requests || [];
-      
-      // Use dummy data if empty
-      if (jobsList.length === 0) {
-        jobsList = getDummyData('jobs');
-      }
+      const jobsList = response.requests || [];
       
       // Enrich jobs with distance if user location is available
       const enrichedJobs = jobsList.map(job => {
         let distance = null;
         if (userLocation && job.userId?.location) {
           // Calculate distance if location data is available
-          // This is a placeholder - actual implementation would use coordinates
           distance = calculateDistance(
             userLocation.latitude,
             userLocation.longitude,
@@ -109,21 +102,8 @@ function BrowseJobs() {
       setJobs(enrichedJobs);
     } catch (err) {
       console.error('Load jobs error:', err);
-      // Use dummy data on error
-      const jobsList = getDummyData('jobs');
-      const enrichedJobs = jobsList.map(job => {
-        let distance = null;
-        if (userLocation && job.userId?.location) {
-          distance = calculateDistance(
-            userLocation.latitude,
-            userLocation.longitude,
-            job.userId.location.latitude || 0,
-            job.userId.location.longitude || 0
-          );
-        }
-        return { ...job, distance };
-      });
-      setJobs(enrichedJobs);
+      setError('فشل تحميل الوظائف. يرجى المحاولة مرة أخرى.');
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -174,14 +154,34 @@ function BrowseJobs() {
     setFilteredJobs(filtered);
   };
 
-  const handleApply = (jobId) => {
-    // Navigate to job application page
-    navigate(`/worker/jobs/${jobId}/apply`);
+  const handleApply = async (jobId) => {
+    try {
+      // Accept the service request
+      const response = await serviceRequestAPI.accept(jobId);
+      
+      if (response.ok && response.request) {
+        // Get the user ID from the accepted request
+        const userId = response.request.userId?._id || response.request.userId;
+        const userName = response.request.userId?.firstName 
+          ? `${response.request.userId.firstName} ${response.request.userId.lastName || ''}`.trim()
+          : 'عميل';
+        
+        // Navigate to chat with the user
+        navigate(`/messages?userId=${userId}&userName=${encodeURIComponent(userName)}`);
+      } else {
+        alert('تم قبول الطلب بنجاح!');
+        loadJobs();
+      }
+    } catch (err) {
+      console.error('Accept job error:', err);
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'فشل قبول الطلب. يرجى المحاولة مرة أخرى.';
+      alert(errorMessage);
+    }
   };
 
   const handleViewDetails = (jobId) => {
-    // Navigate to job details page
-    navigate(`/worker/jobs/${jobId}`);
+    // Navigate to service request details page
+    navigate(`/jobs/${jobId}`);
   };
 
   const clearFilters = () => {

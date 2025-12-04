@@ -165,8 +165,20 @@ function WorkerDashboard() {
 
   const handleAcceptJob = async (jobId) => {
     try {
-      await serviceRequestAPI.accept(jobId);
-      loadDashboardData(); // Reload data
+      const response = await serviceRequestAPI.accept(jobId);
+      
+      if (response.ok && response.request) {
+        // Get the user ID from the accepted request
+        const userId = response.request.userId?._id || response.request.userId;
+        const userName = response.request.userId?.firstName 
+          ? `${response.request.userId.firstName} ${response.request.userId.lastName || ''}`.trim()
+          : 'عميل';
+        
+        // Navigate to chat with the user
+        navigate(`/messages?userId=${userId}&userName=${encodeURIComponent(userName)}`);
+      } else {
+        loadDashboardData(); // Reload data
+      }
     } catch (err) {
       setError('فشل قبول الطلب. يرجى المحاولة مرة أخرى.');
       console.error('Accept job error:', err);

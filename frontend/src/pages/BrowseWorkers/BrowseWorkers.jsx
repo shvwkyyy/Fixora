@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { workerAPI } from '../../utils/api';
-import { getDummyData } from '../../utils/dummyData';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { workerAPI, reviewAPI } from '../../utils/api';
 import styles from './BrowseWorkers.module.css';
-import { useLocation } from 'react-router-dom';
 
 const SPECIALTIES = ['سباكة', 'كهرباء', 'تنظيف', 'دهان', 'نجارة', 'إصلاح أجهزة', 'بناء', 'نجارة أثاث', 'سباك صحي', 'أخرى'];
 const SORT_OPTIONS = [
@@ -20,7 +18,6 @@ function BrowseWorkers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [workers, setWorkers] = useState([]);
-  const [filteredWorkers, setFilteredWorkers] = useState([]);
   
   // Filters
   const [selectedSpecialty, setSelectedSpecialty] = useState('');
@@ -30,7 +27,22 @@ function BrowseWorkers() {
   const [maxPrice, setMaxPrice] = useState('');
   const [sortBy, setSortBy] = useState('rating');
   const [userLocation, setUserLocation] = useState(null);
-  const [minRating, setMinRating] = useState(''); // فلتر التقييم
+  const [minRating, setMinRating] = useState('');
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalWorkers, setTotalWorkers] = useState(0);
+  const ITEMS_PER_PAGE = 20;
+  
+  // Debounce refs
+  const debounceTimer = useRef(null);
+  const isInitialMount = useRef(true);
+  
+  // Debug: Log component mount
+  useEffect(() => {
+    console.log('BrowseWorkers component mounted');
+  }, []);
   
   // Cities from Egyptian governorates
   const EGYPT_CITIES = [
@@ -41,20 +53,19 @@ function BrowseWorkers() {
     'قنا', 'دمنهور', 'مرسى مطروح', 'المنوفية', 'الغردقة', 'شرم الشيخ',
   ];
 
-  useEffect(() => {
-    loadWorkers();
-    getUserLocation();
-
-    // Check if a specialty was passed from homepage
-    if (location.state?.specialty && selectedSpecialty !== location.state.specialty) {
-      setSelectedSpecialty(location.state.specialty);
-    }
-
-  }, [selectedSpecialty, selectedCity]);
-
-  useEffect(() => {
-    applyFilters();
-  }, [workers, selectedSpecialty, selectedCity, selectedDistance, minPrice, maxPrice, sortBy, userLocation, minRating]);
+  // Calculate distance function (defined before loadWorkers)
+  const calculateDistance = useCallback((lat1, lon1, lat2, lon2) => {
+    // Haversine formula to calculate distance between two coordinates
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c * 10) / 10; // Distance in km
+  }, []);
 
   const getUserLocation = () => {
     if (navigator.geolocation) {
@@ -72,14 +83,18 @@ function BrowseWorkers() {
     }
   };
 
-  const loadWorkers = async () => {
+  const loadWorkers = useCallback(async (page = 1) => {
     setLoading(true);
     setError('');
     
     try {
       const params = {
-        verificationStatus: 'verified', // Only show verified workers
+        page,
+        limit: ITEMS_PER_PAGE,
       };
+      
+      // Show all workers (verified and unverified)
+      // Users can see verification badge on each worker card
       
       if (selectedSpecialty) {
         params.specialty = selectedSpecialty;
@@ -89,98 +104,175 @@ function BrowseWorkers() {
         params.city = selectedCity;
       }
 
-      let response;
-      try {
-        response = await workerAPI.listWorkers(params);
-      } catch (e) {
-        response = { workers: [] };
+      const response = await workerAPI.listWorkers(params);
+      
+      // Handle different response structures
+      if (!response) {
+        throw new Error('No response from server');
       }
       
-      let workersList = response.workers || [];
+      // Backend returns { ok: true, workers: [], pagination: {} }
+      const workersList = response.workers || [];
       
-      // Use dummy data if empty
-      if (workersList.length === 0) {
-        workersList = getDummyData('workers');
+      if (!Array.isArray(workersList)) {
+        console.error('Invalid response structure:', response);
+        throw new Error('Invalid response format');
       }
       
-      // Enrich workers with distance and rating
-      const ratingMap = {
-        'worker1': { rating: 4.8, reviewsCount: 24 },
-        'worker2': { rating: 4.6, reviewsCount: 18 },
-        'worker3': { rating: 4.9, reviewsCount: 32 },
-        'worker4': { rating: 4.5, reviewsCount: 15 },
-        'worker5': { rating: 4.7, reviewsCount: 21 },
-      };
+      setTotalWorkers(response.pagination?.total || 0);
+      setTotalPages(response.pagination?.pages || 1);
       
-      const enrichedWorkers = workersList.map(worker => {
-        let distance = null;
-        if (userLocation && worker.userId?.location) {
-          // Calculate distance if location data is available
-          distance = calculateDistance(
-            userLocation.latitude,
-            userLocation.longitude,
-            worker.userId.location.latitude || 0,
-            worker.userId.location.longitude || 0
-          );
-        }
-        
-        // Get rating from map or use defaults
-        const workerRating = ratingMap[worker._id] || { rating: 4.5, reviewsCount: 10 };
-        
-        return { ...worker, distance, rating: workerRating.rating, reviewsCount: workerRating.reviewsCount };
-      });
+      // Enrich workers with distance and fetch ratings (with timeout to prevent hanging)
+      const enrichedWorkers = await Promise.allSettled(
+        workersList.map(async (worker) => {
+          let distance = null;
+          // Calculate distance if user location is available
+          if (userLocation && worker.userId?.location) {
+            distance = calculateDistance(
+              userLocation.latitude,
+              userLocation.longitude,
+              worker.userId.location.latitude || 0,
+              worker.userId.location.longitude || 0
+            );
+          }
+          
+          // Get real ratings from backend (fetch in parallel for better performance)
+          let rating = 0;
+          let reviewsCount = 0;
+          try {
+            const reviewsResponse = await reviewAPI.getWorkerReviews(worker._id, { limit: 100 });
+            if (reviewsResponse.ok && reviewsResponse.reviews) {
+              const reviews = reviewsResponse.reviews;
+              reviewsCount = reviews.length;
+              if (reviews.length > 0) {
+                const sum = reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
+                rating = sum / reviews.length;
+              }
+            }
+          } catch (err) {
+            // Silently fail - workers will show 0 rating if reviews can't be loaded
+            console.warn('Failed to load reviews for worker:', worker._id);
+          }
+          
+          return { 
+            ...worker, 
+            distance, 
+            rating: Math.round(rating * 10) / 10, // Round to 1 decimal place
+            reviewsCount 
+          };
+        })
+      );
 
-      setWorkers(enrichedWorkers);
+      // Extract successful results, filter out failures
+      const successfulWorkers = enrichedWorkers
+        .filter(result => result.status === 'fulfilled')
+        .map(result => result.value);
+      
+      setWorkers(successfulWorkers);
+      isInitialMount.current = false;
     } catch (err) {
-      setError('فشل تحميل قائمة الصنايعيين. يرجى المحاولة مرة أخرى.');
       console.error('Load workers error:', err);
+      const errorMessage = err.response?.data?.error || err.message || 'فشل تحميل قائمة الصنايعيين. يرجى المحاولة مرة أخرى.';
+      setError(errorMessage);
+      setWorkers([]);
+      setTotalWorkers(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedSpecialty, selectedCity, userLocation, selectedDistance, calculateDistance]);
 
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    // Haversine formula to calculate distance between two coordinates
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return Math.round(R * c * 10) / 10; // Distance in km
-  };
+  // Get user location on mount
+  useEffect(() => {
+    getUserLocation();
+    
+    // Check if a specialty was passed from homepage
+    if (location.state?.specialty) {
+      setSelectedSpecialty(location.state.specialty);
+    }
+    
+    // Initial load - only run once on mount
+    if (isInitialMount.current) {
+      loadWorkers(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const applyFilters = () => {
+  // Debounced load workers when filters change
+  useEffect(() => {
+    if (isInitialMount.current) {
+      return;
+    }
+    
+    // Clear previous timer
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+    
+    // Debounce API call
+    debounceTimer.current = setTimeout(() => {
+      loadWorkers(1);
+    }, 300);
+    
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSpecialty, selectedCity]);
+
+  // Load workers when page changes
+  useEffect(() => {
+    if (!isInitialMount.current) {
+      loadWorkers(currentPage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  // Memoized filtered and sorted workers
+  const filteredWorkers = useMemo(() => {
     let filtered = [...workers];
 
-    // فلتر التخصص (أسود)
-    if (selectedSpecialty) {
-      filtered = filtered.filter(w => w.specialty === selectedSpecialty);
-    }
-    // فلتر المدينة (بينك)
-    if (selectedCity) {
-      filtered = filtered.filter(w => w.userId?.city === selectedCity);
-    }
-    // فلتر المسافة (لو مفعل)
+    // فلتر المسافة (only if distance filter is active)
     if (selectedDistance !== 'all' && userLocation) {
       const maxDistance = parseFloat(selectedDistance);
-      filtered = filtered.filter(w => w.distance && w.distance <= maxDistance);
+      filtered = filtered.filter(w => {
+        if (!w.distance) {
+          // Calculate distance on the fly if not already calculated
+          if (w.userId?.location) {
+            const dist = calculateDistance(
+              userLocation.latitude,
+              userLocation.longitude,
+              w.userId.location.latitude || 0,
+              w.userId.location.longitude || 0
+            );
+            w.distance = dist;
+            return dist <= maxDistance;
+          }
+          return false;
+        }
+        return w.distance <= maxDistance;
+      });
     }
-    // فلتر السعر (أحمر)
+    
+    // فلتر السعر
     if (minPrice) {
       filtered = filtered.filter(w => Number(w.hourPrice) >= Number(minPrice));
     }
     if (maxPrice) {
       filtered = filtered.filter(w => Number(w.hourPrice) <= Number(maxPrice));
     }
-    // فلتر التقييم (أصفر) -- لو ليس لديه rating يعتبر 0
+    
+    // فلتر التقييم
     if (minRating) {
       filtered = filtered.filter(w => Number(w.rating ?? 0) >= Number(minRating));
     }
 
-    // فلترة/فرز حسب sort
+    // Sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'rating': return (b.rating || 0) - (a.rating || 0);
@@ -190,23 +282,24 @@ function BrowseWorkers() {
           if (!a.distance) return 1;
           if (!b.distance) return -1;
           return a.distance - b.distance;
-        case 'newest': return new Date(b.createdAt) - new Date(a.createdAt);
+        case 'newest': return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
         default: return 0;
       }
     });
 
-    setFilteredWorkers(filtered);
-  };
+    return filtered;
+  }, [workers, selectedDistance, minPrice, maxPrice, minRating, sortBy, userLocation, calculateDistance]);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSelectedSpecialty('');
     setSelectedCity('');
     setSelectedDistance('all');
     setMinPrice('');
     setMaxPrice('');
     setSortBy('rating');
-    setMinRating(''); // Clear rating filter
-  };
+    setMinRating('');
+    setCurrentPage(1);
+  }, []);
 
   const renderStars = (rating) => {
     const fullStars = Math.floor(rating);
@@ -228,14 +321,6 @@ function BrowseWorkers() {
     return (first + last).toUpperCase() || 'ص';
   };
 
-  if (loading) {
-    return (
-      <div className={styles['browse-workers-container']}>
-        <div className={styles.loading}>جاري تحميل الصنايعيين...</div>
-      </div>
-    );
-  }
-
   return (
     <div className={styles['browse-workers-container']}>
       <div className={styles['page-header']}>
@@ -243,7 +328,43 @@ function BrowseWorkers() {
         <p>ابحث عن صنايعي محترف لاحتياجاتك</p>
       </div>
 
-      {error && <div className={styles.error}>{error}</div>}
+      {loading && workers.length === 0 && (
+        <div className={styles.loading} style={{ 
+          padding: '40px', 
+          textAlign: 'center', 
+          fontSize: '1.1rem',
+          color: '#64748b'
+        }}>
+          جاري تحميل الصنايعيين...
+        </div>
+      )}
+
+      {error && (
+        <div className={styles.error} style={{ 
+          padding: '16px', 
+          margin: '20px', 
+          background: '#fee2e2', 
+          color: '#dc2626', 
+          borderRadius: '8px',
+          textAlign: 'right'
+        }}>
+          {error}
+          <button 
+            onClick={() => loadWorkers(currentPage)}
+            style={{
+              marginTop: '10px',
+              padding: '8px 16px',
+              background: '#dc2626',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            إعادة المحاولة
+          </button>
+        </div>
+      )}
 
       {/* Filters Section */}
       <div className={styles['filters-section']}>
@@ -364,7 +485,7 @@ function BrowseWorkers() {
         <div className={styles['workers-header']}>
           <h2>الصنايعيين المتاحين</h2>
           <span className={styles['workers-count']}>
-            {filteredWorkers.length} صنايعي متاح
+            {totalWorkers > 0 ? `${totalWorkers} صنايعي متاح` : `${filteredWorkers.length} صنايعي متاح`}
           </span>
         </div>
 
@@ -405,11 +526,18 @@ function BrowseWorkers() {
                     <div className={styles['worker-rating']}>
                       {renderStars(worker.rating || 0)}
                       <span className={styles['rating-value']}>
-                        {worker.rating?.toFixed(1) || '0.0'}
+                        {worker.rating ? worker.rating.toFixed(1) : '0.0'}
                       </span>
-                      <span className={styles['reviews-count']}>
-                        ({worker.reviewsCount || 0} تقييم)
-                      </span>
+                      {worker.reviewsCount > 0 && (
+                        <span className={styles['reviews-count']}>
+                          ({worker.reviewsCount} تقييم)
+                        </span>
+                      )}
+                      {worker.reviewsCount === 0 && (
+                        <span className={styles['reviews-count']} style={{ color: '#94a3b8' }}>
+                          (لا توجد تقييمات)
+                        </span>
+                      )}
                     </div>
                     {worker.verificationStatus === 'verified' && (
                       <span className={`${styles['verification-badge']} ${styles.verified}`}>
@@ -453,9 +581,42 @@ function BrowseWorkers() {
                   >
                     عرض الملف الشخصي
                   </button>
+                  <button
+                    className={`${styles.btn} ${styles['btn-secondary']}`}
+                    onClick={() => {
+                      const workerUserId = worker.userId?._id || worker.userId?.id;
+                      const workerName = `${worker.userId?.firstName || ''} ${worker.userId?.lastName || ''}`.trim();
+                      navigate(`/messages?userId=${workerUserId}&userName=${encodeURIComponent(workerName)}`);
+                    }}
+                  >
+                    مراسلة
+                  </button>
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className={styles['pagination']}>
+            <button
+              className={styles['pagination-btn']}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1 || loading}
+            >
+              السابق
+            </button>
+            <span className={styles['pagination-info']}>
+              صفحة {currentPage} من {totalPages}
+            </span>
+            <button
+              className={styles['pagination-btn']}
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages || loading}
+            >
+              التالي
+            </button>
           </div>
         )}
       </div>

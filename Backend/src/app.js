@@ -23,5 +23,6 @@ app.use("/api/service-requests", require("./routes/ServiceRequest.routes"));
 app.use("/api/workers", require("./routes/worker.routes"));
 app.use("/api/users", require("./routes/user.routes"));
 app.use("/api/reviews", require("./routes/review.routes"));
+app.use("/api/messages", require("./routes/message.routes"));
 
 module.exports = app;
