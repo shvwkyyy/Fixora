@@ -110,7 +110,7 @@
 .notifications-dropdown {
     position: absolute;
     top: 45px; /* Adjusted to appear directly below the icon */
-    right: -10px; /* Adjusted for RTL alignment below the icon */
+    left: 0; /* Positioned on the left side near the notification icon */
     width: 300px;
     max-height: 400px;
     background-color: white;
