@@ -14,7 +14,7 @@ A comprehensive service marketplace platform connecting users with skilled servi
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/shvwkyyy/Fixora
    cd Fixora
    ```
 
