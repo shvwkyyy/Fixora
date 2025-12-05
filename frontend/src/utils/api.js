@@ -75,6 +75,8 @@ export const authAPI = {
       city: userData.City || userData.city,
       area: userData.Area || userData.area,
       userType: userData.UserType || userData.userType || 'user',
+      specialty: userData.specialty || userData.Specialty,
+      hourPrice: userData.hourPrice || userData.HourlyRate,
     };
     const response = await api.post('/api/auth/register', backendData);
     return response.data;

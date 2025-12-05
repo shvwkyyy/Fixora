@@ -3,7 +3,8 @@ import services from './services';
 import check_logo from '../../assets/check.svg';
 import shield_logo from '../../assets/shield.svg';
 import clock_logo from '../../assets/clock.svg';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 
 function Services({ service }) {
     const navigate = useNavigate();
@@ -24,6 +25,21 @@ function Services({ service }) {
 }
 
 function Body() {
+    const location = useLocation();
+
+    // Handle hash navigation when coming from other pages
+    useEffect(() => {
+        if (location.hash) {
+            const hash = location.hash.substring(1); // Remove the # symbol
+            setTimeout(() => {
+                const element = document.getElementById(hash);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100); // Small delay to ensure page is rendered
+        }
+    }, [location]);
+
     return (
         <main>
             <section className={styles["introduction-section"]} id="services">

@@ -16,6 +16,8 @@ function Register() {
     City: '',
     Area: '',
     UserType: 'user',
+    Specialty: '', // For workers
+    HourlyRate: '', // For workers
     coordinates: [0, 0], // [longitude, latitude]
   });
 
@@ -106,6 +108,16 @@ function Register() {
       newErrors.Area = 'المنطقة مطلوبة';
     }
 
+    // Validate worker-specific fields
+    if (formData.UserType === 'worker') {
+      if (!formData.Specialty.trim()) {
+        newErrors.Specialty = 'التخصص مطلوب للصنايعيين';
+      }
+      if (!formData.HourlyRate || formData.HourlyRate <= 0) {
+        newErrors.HourlyRate = 'سعر الساعة مطلوب ويجب أن يكون أكبر من صفر';
+      }
+    }
+
     // Location validation - currently optional as backend doesn't accept it in register
     // if (formData.coordinates[0] === 0 && formData.coordinates[1] === 0) {
     //   newErrors.location = 'يرجى تحديد موقعك الجغرافي';
@@ -131,6 +143,12 @@ function Register() {
       // Note: Backend register endpoint doesn't currently accept location
       // Location will need to be updated separately or backend needs to be updated
       const { coordinates, ...registerData } = submitData;
+
+      // Map worker-specific fields
+      if (registerData.UserType === 'worker') {
+        registerData.specialty = registerData.Specialty;
+        registerData.hourPrice = registerData.HourlyRate;
+      }
 
       const response = await authAPI.register(registerData);
 
@@ -370,6 +388,52 @@ function Register() {
             />
             {errors.Area && <span className={styles['error-message']}>{errors.Area}</span>}
           </div>
+
+          {/* Worker-specific fields */}
+          {formData.UserType === 'worker' && (
+            <>
+              <div className={styles['form-group']}>
+                <label htmlFor="Specialty">التخصص *</label>
+                <select
+                  id="Specialty"
+                  name="Specialty"
+                  value={formData.Specialty}
+                  onChange={handleChange}
+                  className={errors.Specialty ? styles['error'] : ''}
+                  required
+                >
+                  <option value="">اختر التخصص</option>
+                  <option value="سباكة">سباكة</option>
+                  <option value="كهرباء">كهرباء</option>
+                  <option value="تنظيف">تنظيف</option>
+                  <option value="دهان">دهان</option>
+                  <option value="نجارة">نجارة</option>
+                  <option value="إصلاح أجهزة">إصلاح أجهزة</option>
+                  <option value="بناء">بناء</option>
+                  <option value="نجارة أثاث">نجارة أثاث</option>
+                  <option value="سباك صحي">سباك صحي</option>
+                  <option value="أخرى">أخرى</option>
+                </select>
+                {errors.Specialty && <span className={styles['error-message']}>{errors.Specialty}</span>}
+              </div>
+
+              <div className={styles['form-group']}>
+                <label htmlFor="HourlyRate">سعر الساعة (جنيه مصري) *</label>
+                <input
+                  type="number"
+                  id="HourlyRate"
+                  name="HourlyRate"
+                  value={formData.HourlyRate}
+                  onChange={handleChange}
+                  placeholder="أدخل سعر الساعة"
+                  className={errors.HourlyRate ? styles['error'] : ''}
+                  min="1"
+                  required
+                />
+                {errors.HourlyRate && <span className={styles['error-message']}>{errors.HourlyRate}</span>}
+              </div>
+            </>
+          )}
 
           {/* Submit Error */}
           {errors.submit && (

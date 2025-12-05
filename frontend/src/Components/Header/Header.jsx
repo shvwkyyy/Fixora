@@ -9,9 +9,12 @@ import { FaUserCircle, FaBell, FaEnvelope } from 'react-icons/fa';
 function Header() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userName, setUserName] = useState('');
+    const [userType, setUserType] = useState('');
     const [unreadNotifications, setUnreadNotifications] = useState(3); // Dummy notification count
     const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showSearchInput, setShowSearchInput] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -32,15 +35,20 @@ function Header() {
                     } else {
                         setUserName('حسابي');
                     }
+                    // Set user type
+                    setUserType(userObj.userType || 'user');
                 } else {
                     setUserName('حسابي');
+                    setUserType('user');
                 }
             } catch { 
-                setUserName('حسابي'); 
+                setUserName('حسابي');
+                setUserType('user');
             }
         } else {
             setIsLoggedIn(false);
             setUserName('');
+            setUserType('');
         }
     }, []);
 
@@ -104,6 +112,39 @@ function Header() {
         navigate('/login');
     };
 
+    // Search functionality
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            // Navigate to workers page with search query
+            navigate(`/workers?search=${encodeURIComponent(searchQuery.trim())}`);
+            setSearchQuery('');
+            setShowSearchInput(false);
+        }
+    };
+
+    const handleSearchClick = () => {
+        if (showSearchInput && searchQuery.trim()) {
+            handleSearch(new Event('submit'));
+        } else {
+            setShowSearchInput(true);
+        }
+    };
+
+    // Handle navigation to homepage sections
+    const handleNavLink = (hash) => {
+        if (window.location.pathname === '/') {
+            // Already on homepage, just scroll
+            const element = document.getElementById(hash);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        } else {
+            // Navigate to homepage with hash
+            navigate(`/#${hash}`);
+        }
+    };
+
     return (
         <>
             <nav className={styles["header-nav"]}>
@@ -147,6 +188,16 @@ function Header() {
                                 </button>
                                 {showProfileDropdown && (
                                     <div className="profile-dropdown-menu" style={{position:'absolute',top:'110%',left:0,background:'#fff',boxShadow:'0 2px 8px rgba(0,0,0,0.08)',borderRadius:10,minWidth:140, zIndex:100}}>
+                                        {userType === 'worker' && (
+                                            <>
+                                                <button
+                                                    style={{padding:'10px 16px',width:'100%',background:'none',border:'none',textAlign:'right',cursor:'pointer',fontSize:'1rem'}}
+                                                    onClick={()=>{setShowProfileDropdown(false); navigate('/worker/dashboard')}}>
+                                                    لوحة تحكم الصنايعي
+                                                </button>
+                                                <div style={{height:1,background:'#e0e0e0', margin:'2px 0'}}/>
+                                            </>
+                                        )}
                                         <button
                                             style={{padding:'10px 16px',width:'100%',background:'none',border:'none',textAlign:'right',cursor:'pointer',fontSize:'1rem'}}
                                             onClick={()=>{setShowProfileDropdown(false); navigate('/profile')}}>
@@ -169,18 +220,83 @@ function Header() {
                             <Link to="/login" className={styles["login-btn"]}>تسجيل دخول</Link>
                         </>
                     )}
-                    <button 
-                        className={styles["search-btn"]}
-                        onClick={() => navigate('/workers')}
-                    >
-                        <span>ابحث عن عمال</span>
-                        <img src={search_glass} alt="search glass" />
-                    </button>
+                    {showSearchInput ? (
+                        <form 
+                            onSubmit={handleSearch}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="ابحث عن صنايعي أو تخصص..."
+                                autoFocus
+                                style={{
+                                    padding: '8px 12px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '6px',
+                                    fontSize: '14px',
+                                    minWidth: '200px',
+                                    direction: 'rtl'
+                                }}
+                                onBlur={(e) => {
+                                    // Delay hiding to allow form submission
+                                    setTimeout(() => {
+                                        if (!e.target.value.trim()) {
+                                            setShowSearchInput(false);
+                                        }
+                                    }, 200);
+                                }}
+                            />
+                            <button 
+                                type="submit"
+                                className={styles["search-btn"]}
+                                style={{ margin: 0 }}
+                            >
+                                <img src={search_glass} alt="search glass" />
+                            </button>
+                        </form>
+                    ) : (
+                        <button 
+                            className={styles["search-btn"]}
+                            onClick={handleSearchClick}
+                        >
+                            <span>ابحث عن عمال</span>
+                            <img src={search_glass} alt="search glass" />
+                        </button>
+                    )}
                 </div>
                 <div className={styles["nav-content-links"]}>
-                    <a href="#about-us">من نحن</a>
-                    <a href="#how-works">كيف يعمل</a>
-                    <a href="#services">الخدمات</a>
+                    <a 
+                        href="/#about-us"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            handleNavLink('about-us');
+                        }}
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        من نحن
+                    </a>
+                    <a 
+                        href="/#how-works"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            handleNavLink('how-works');
+                        }}
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        كيف يعمل
+                    </a>
+                    <a 
+                        href="/#services"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            handleNavLink('services');
+                        }}
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        الخدمات
+                    </a>
                     <Link to="/">
                         <img src={fixora_logo} alt="fixora logo" />
                     </Link>

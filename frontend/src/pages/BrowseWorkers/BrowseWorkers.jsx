@@ -96,6 +96,13 @@ function BrowseWorkers() {
       // Show all workers (verified and unverified)
       // Users can see verification badge on each worker card
       
+      // Check for search query in URL
+      const urlParams = new URLSearchParams(location.search);
+      const searchParam = urlParams.get('search');
+      if (searchParam) {
+        params.search = searchParam;
+      }
+      
       if (selectedSpecialty) {
         params.specialty = selectedSpecialty;
       }
@@ -113,6 +120,13 @@ function BrowseWorkers() {
       
       // Backend returns { ok: true, workers: [], pagination: {} }
       const workersList = response.workers || [];
+      
+      console.log('Workers response:', { 
+        ok: response.ok, 
+        workersCount: workersList.length, 
+        total: response.pagination?.total,
+        workers: workersList 
+      });
       
       if (!Array.isArray(workersList)) {
         console.error('Invalid response structure:', response);
@@ -180,7 +194,7 @@ function BrowseWorkers() {
     } finally {
       setLoading(false);
     }
-  }, [selectedSpecialty, selectedCity, userLocation, selectedDistance, calculateDistance]);
+  }, [selectedSpecialty, selectedCity, userLocation, selectedDistance, calculateDistance, location.search]);
 
   // Get user location on mount
   useEffect(() => {
@@ -189,6 +203,20 @@ function BrowseWorkers() {
     // Check if a specialty was passed from homepage
     if (location.state?.specialty) {
       setSelectedSpecialty(location.state.specialty);
+    }
+    
+    // Check for search query in URL
+    const urlParams = new URLSearchParams(location.search);
+    const searchParam = urlParams.get('search');
+    if (searchParam) {
+      // Try to match search query with specialty
+      const matchedSpecialty = SPECIALTIES.find(spec => 
+        spec.toLowerCase().includes(searchParam.toLowerCase()) || 
+        searchParam.toLowerCase().includes(spec.toLowerCase())
+      );
+      if (matchedSpecialty) {
+        setSelectedSpecialty(matchedSpecialty);
+      }
     }
     
     // Initial load - only run once on mount
@@ -223,7 +251,7 @@ function BrowseWorkers() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSpecialty, selectedCity]);
+  }, [selectedSpecialty, selectedCity, location.search]);
 
   // Load workers when page changes
   useEffect(() => {

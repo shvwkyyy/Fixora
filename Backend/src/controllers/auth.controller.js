@@ -1,4 +1,5 @@
 const User = require("../models/user.model");
+const Worker = require("../models/WorkerProfile.model");
 const bcrypt = require("bcryptjs");
 
 const {
@@ -20,10 +21,20 @@ const sanitizeUser = (userDoc) => {
 // REGISTER
 exports.register = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, phone, city, area, userType = "user" } = req.body;
+    const { firstName, lastName, email, password, phone, city, area, userType = "user", specialty, hourPrice } = req.body;
 
     if (!firstName || !lastName || !email || !password || !phone || !city || !area) {
       return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // Validate worker-specific fields
+    if (userType === "worker") {
+      if (!specialty) {
+        return res.status(400).json({ message: "Specialty is required for workers" });
+      }
+      if (!hourPrice || hourPrice <= 0) {
+        return res.status(400).json({ message: "Hour price is required and must be greater than 0 for workers" });
+      }
     }
 
     const exists = await User.findOne({ email });
@@ -40,6 +51,22 @@ exports.register = async (req, res) => {
       area,
       userType,
     });
+
+    // Create WorkerProfile if user is a worker
+    if (userType === "worker" && specialty && hourPrice) {
+      try {
+        await Worker.create({
+          userId: user._id,
+          specialty,
+          hourPrice: Number(hourPrice),
+          verificationStatus: "pending",
+        });
+      } catch (workerErr) {
+        console.error("Error creating worker profile:", workerErr);
+        // Don't fail registration if worker profile creation fails, but log it
+        // The worker can update their profile later
+      }
+    }
 
     const safeUser = sanitizeUser(user);
 

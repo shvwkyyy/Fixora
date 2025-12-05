@@ -8,11 +8,43 @@ const parsePositiveInt = (value, fallback) => {
 
 exports.listWorkers = async (req, res) => {
   try {
-    const { specialty, city, verificationStatus, page = 1, limit = 20 } = req.query;
+    const { specialty, city, verificationStatus, search, page = 1, limit = 20 } = req.query;
 
     const filter = {};
     if (specialty) filter.specialty = specialty;
     if (verificationStatus) filter.verificationStatus = verificationStatus;
+
+    // Handle search query - search by specialty, city, or worker name
+    if (search) {
+      const searchLower = search.toLowerCase();
+      
+      // First, try to find matching users by name or city
+      const userFilter = {
+        $or: [
+          { firstName: { $regex: search, $options: 'i' } },
+          { lastName: { $regex: search, $options: 'i' } },
+          { city: { $regex: search, $options: 'i' } },
+          { area: { $regex: search, $options: 'i' } }
+        ]
+      };
+      
+      const matchingUsers = await User.find(userFilter).select("_id").lean();
+      const userIds = matchingUsers.map((doc) => doc._id);
+      
+      // Also check if search matches any specialty
+      const specialtyMatch = {
+        specialty: { $regex: search, $options: 'i' }
+      };
+      
+      if (userIds.length > 0) {
+        filter.$or = [
+          { userId: { $in: userIds } },
+          specialtyMatch
+        ];
+      } else {
+        filter.specialty = { $regex: search, $options: 'i' };
+      }
+    }
 
     if (city) {
       const candidateIds = await User.find({ city }).select("_id").lean();
@@ -24,13 +56,23 @@ exports.listWorkers = async (req, res) => {
           pagination: { total: 0, page: 1, limit: parsePositiveInt(limit, 20), pages: 0 },
         });
       }
-      filter.userId = { $in: ids };
+      // Combine with existing filter if search was used
+      if (filter.$or) {
+        filter.$and = [
+          { $or: filter.$or },
+          { userId: { $in: ids } }
+        ];
+        delete filter.$or;
+      } else {
+        filter.userId = { $in: ids };
+      }
     }
 
     const currentPage = parsePositiveInt(page, 1);
     const perPage = parsePositiveInt(limit, 20);
     const skip = (currentPage - 1) * perPage;
 
+    // Ensure we populate userId properly and only show workers with specialty
     const query = Worker.find(filter)
       .populate("userId", "firstName lastName email phone city area userType profilePhoto")
       .sort({ createdAt: -1 })
@@ -40,14 +82,30 @@ exports.listWorkers = async (req, res) => {
 
     const [workers, total] = await Promise.all([query, Worker.countDocuments(filter)]);
 
+    // Filter out workers without specialty (shouldn't happen but just in case)
+    const validWorkers = workers.filter(worker => worker.specialty && worker.specialty.trim());
+    
+    console.log('List workers:', {
+      filter,
+      totalFound: workers.length,
+      validWorkers: validWorkers.length,
+      workers: validWorkers.map(w => ({ id: w._id, specialty: w.specialty, userId: w.userId?.firstName }))
+    });
+    
+    // Recalculate total count for valid workers
+    const validTotal = await Worker.countDocuments({
+      ...filter,
+      specialty: { $exists: true, $ne: '' }
+    });
+
     return res.json({
       ok: true,
-      workers,
+      workers: validWorkers,
       pagination: {
-        total,
+        total: validTotal,
         page: currentPage,
         limit: perPage,
-        pages: Math.ceil(total / perPage) || 1,
+        pages: Math.ceil(validTotal / perPage) || 1,
       },
     });
   } catch (err) {

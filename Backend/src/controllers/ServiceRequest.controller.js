@@ -28,17 +28,24 @@ const PostService = async (req, res) => {
 const acceptService = async (req, res) => {
   try {
     const workerId = req.user?.id || req.user?._id;
-    const role = req.user?.role || req.user?.UserType;
-    if (!workerId || role !== "worker") {
+    if (!workerId) {
+      return res.status(401).json({ ok: false, error: "authentication required" });
+    }
+    
+    // Verify user is a worker by checking userType in database
+    const User = require("../models/user.model");
+    const user = await User.findById(workerId).select("userType").lean();
+    if (!user || user.userType !== "worker") {
       return res.status(403).json({ ok: false, error: "only workers can accept requests" });
     }
+    
     const requestId = req.params.id;
     if (!requestId) return res.status(400).json({ ok: false, error: "request id required" });
     const updated = await ServiceRequest.findOneAndUpdate(
       { _id: requestId, status: "pending", assignedWorker: null },
       { $set: { status: "accepted", assignedWorker: workerId, acceptedAt: new Date() } },
       { new: true }
-    );
+    ).populate('userId', 'firstName lastName email phone');
     if (!updated) {
       return res.status(400).json({ ok: false, error: "request not available (maybe already accepted)" });
     }
