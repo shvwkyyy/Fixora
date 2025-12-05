@@ -145,6 +145,22 @@ function Header() {
         }
     };
 
+    const handleCreateRequest = () => {
+        if (!isLoggedIn) {
+            navigate('/login');
+            return;
+        }
+        navigate('/jobs/create');
+    };
+
+    const handleBrowseJobs = () => {
+        if (!isLoggedIn) {
+            navigate('/login');
+            return;
+        }
+        navigate('/worker/jobs');
+    };
+
     return (
         <>
             <nav className={styles["header-nav"]}>
@@ -307,6 +323,14 @@ function Header() {
                     <h1>خدمات منزلية سهلة وبسيطة</h1>
                     <p className={styles["header-paragraph"]}>تواصل مع محترفين موثوقين لجميع احتياجات الخدمات المنزلية. من السباكة إلى الدهان، التنظيف إلى الإصلاحات - نحن</p>
                     <p className={styles["header-paragraph"]}>. هنا لخدمتك</p>
+                    <div className={styles["cta-buttons"]}>
+                        <button className={styles["primary-cta"]} onClick={handleCreateRequest}>
+                            اطلب خدمة الآن
+                        </button>
+                        <button className={styles["secondary-cta"]} onClick={handleBrowseJobs}>
+                            وظائف الصنايعية
+                        </button>
+                    </div>
                 </section>
             </header>
         </>

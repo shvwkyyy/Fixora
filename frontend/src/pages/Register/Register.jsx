@@ -139,25 +139,47 @@ function Register() {
 
     try {
       const { confirmPassword, ...submitData } = formData;
-
-      // Note: Backend register endpoint doesn't currently accept location
-      // Location will need to be updated separately or backend needs to be updated
       const { coordinates, ...registerData } = submitData;
 
-      // Map worker-specific fields
-      if (registerData.UserType === 'worker') {
-        registerData.specialty = registerData.Specialty;
-        registerData.hourPrice = registerData.HourlyRate;
+      registerData.userType = registerData.UserType || 'user';
+
+      if (registerData.userType === 'worker') {
+        registerData.specialty = registerData.Specialty?.trim();
+        registerData.hourPrice = Number(registerData.HourlyRate);
       }
 
-      const response = await authAPI.register(registerData);
+      const payload = {
+        firstName: registerData.FName.trim(),
+        lastName: registerData.LName.trim(),
+        email: registerData.Email.trim(),
+        password: registerData.Password,
+        phone: registerData.Phone.trim(),
+        city: registerData.City.trim(),
+        area: registerData.Area.trim(),
+        userType: registerData.userType,
+      };
 
-      // Don't store tokens - user needs to login first
-      // Show success message and redirect to login
-      alert('تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول الآن.');
-      
-      // Redirect to login page
-      navigate('/login');
+      if (registerData.userType === 'worker') {
+        payload.specialty = registerData.specialty;
+        payload.hourPrice = registerData.hourPrice;
+      }
+
+      const response = await authAPI.register(payload);
+
+      if (response.accessToken && response.refreshToken) {
+        localStorage.setItem('accessToken', response.accessToken);
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
+
+      if (response.user) {
+        localStorage.setItem('user', JSON.stringify(response.user));
+      }
+
+      alert('تم إنشاء الحساب بنجاح!');
+
+      const destination =
+        response.user?.userType === 'worker' ? '/worker/dashboard' : '/';
+      navigate(destination);
     } catch (error) {
       const errorMessage =
         error.response?.data?.message || 'حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.';

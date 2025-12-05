@@ -42,7 +42,7 @@ const acceptService = async (req, res) => {
     const requestId = req.params.id;
     if (!requestId) return res.status(400).json({ ok: false, error: "request id required" });
     const updated = await ServiceRequest.findOneAndUpdate(
-      { _id: requestId, status: "pending", assignedWorker: null },
+      { _id: requestId, status: "pending", assignedWorker: null, userId: { $ne: workerId } },
       { $set: { status: "accepted", assignedWorker: workerId, acceptedAt: new Date() } },
       { new: true }
     ).populate('userId', 'firstName lastName email phone');
