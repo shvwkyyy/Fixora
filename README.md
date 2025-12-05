@@ -211,10 +211,6 @@ Common issues and solutions:
 
 For more troubleshooting tips, see [DOCUMENTATION.md](./DOCUMENTATION.md#troubleshooting)
 
-## 📄 License
-
-[Add your license here]
-
 ## 👥 Contributing
 
 1. Fork the repository
